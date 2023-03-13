@@ -1,0 +1,3 @@
+(executable
+ (name verifier)
+ (public_name Verifier))
