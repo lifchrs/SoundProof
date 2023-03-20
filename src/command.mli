@@ -1,6 +1,11 @@
 (** Parsing of user's commands. *)
 
-type binary_op = Conj | Dis | Impl | Bi
+type binary_op =
+  | Conj
+  | Dis
+  | Impl
+  | Bi
+
 type unary_op = Neg
 
 type expression =

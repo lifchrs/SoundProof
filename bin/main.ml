@@ -1,17 +1,20 @@
+open Verifier
+open Command
+open Logic
+
 let help_message =
   "Thank you for using Proof Verifier supreme. \n"
   ^ "To input your proof, you will enter the statement you want to show, your \
      given assumptions, and the steps between. \n"
   ^ "The supported syntax is as follows: \n"
-  ^ "    -show E: Goal is to prove E true \n"
-  ^ "    -assume P: Set P as true \n"
-  ^ "    -step R: Use R as next step of proof \n"
+  ^ "    -Show E: Goal is to prove E true \n"
+  ^ "    -Assume P: Set P as true \n"
+  ^ "    -Verify R: Use R as next step of proof \n"
   ^ "Any of E, P, R, must only contain conjugation, disjunction, implication, \
      bi-implication, or negation.\n"
   ^ "These are denoted by \"^\", \"v\", \"=>\", \"<=>\", \"~\" respectively\n"
   ^ "Finally, use proper parentheses to certify order of operations. For \
-     example, \n"
-  ^ "While \"(P => Q) ^ ~R\" is proper syntax, \"P => Q ^ ~R\" is not. \n"
+     example, \n" ^ "\"(P=>Q)^!R\" and \"P=>(Q^!R)\" are both proper syntax. \n"
   ^ "Good luck and happy proving!"
 
 (** Prints provided string by character instead of at once *)
@@ -28,6 +31,66 @@ let type_out_slowly str =
   loop 0;
   print_newline ()
 
+(** Checks if the previous input and current input have same truth values*)
+let rec proof_loop prev =
+  let str =
+    try read_line ()
+    with End_of_file ->
+      print_endline "Exiting now.";
+      exit 0
+  in
+  if str = "quit" then exit 0
+  else
+    let new_input =
+      try
+        match parse str with
+        | Assume e -> e
+        | Show e -> e
+        | Verify e -> e
+      with
+      | Malformed ->
+          print_endline
+            "Malformed. Please make sure you enter in the correct format";
+          proof_loop prev
+      | Empty ->
+          print_endline
+            "Empty. Please make sure you enter in the correct format";
+          proof_loop prev
+    in
+    if compare prev new_input then (
+      print_endline "Step is logically sound!";
+      proof_loop new_input)
+    else (
+      print_endline "Incorrect Step. Terminating proof.";
+      exit 0)
+
+(** Gets first input from user *)
+let rec start_proof _ =
+  let str =
+    try read_line ()
+    with End_of_file ->
+      print_endline "Exiting now.";
+      exit 0
+  in
+  if str = "quit" then exit 0
+  else
+    try
+      let prev =
+        match parse str with
+        | Assume e -> e
+        | Show e -> e
+        | Verify e -> e
+      in
+      proof_loop prev
+    with
+    | Malformed ->
+        print_endline
+          "Malformed. Please make sure you enter in the correct format";
+        start_proof ()
+    | Empty ->
+        print_endline "Empty. Please make sure you enter in the correct format";
+        start_proof ()
+
 (** [main ()] prompts for the game to play, then starts it. *)
 let rec main () =
   match read_line () with
@@ -42,8 +105,9 @@ let rec main () =
   | "start"
   | "Start"
   | "START" ->
-      print_endline "~~VERIFY FUNCTIONALITY GOES HERE~~";
-      main ()
+      print_endline "Beginning proof process.";
+      let _ = start_proof () in
+      ()
   | "quit" | "Quit" | "QUIT" ->
       print_endline "Exiting now.";
       exit 0

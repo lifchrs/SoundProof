@@ -1,4 +1,9 @@
-type binary_op = Conj | Dis | Impl | Bi
+type binary_op =
+  | Conj
+  | Dis
+  | Impl
+  | Bi
+
 type unary_op = Neg
 
 type expression =
@@ -30,7 +35,10 @@ let is_proposition ascii = ascii >= 65 && ascii <= 90
 
 let rec peel_parentheses lst =
   let rec can_peel lst cnt =
-    if cnt = -1 then match lst with [] -> true | _ -> false
+    if cnt = -1 then
+      match lst with
+      | [] -> true
+      | _ -> false
     else
       match lst with
       | '(' :: t -> can_peel t (cnt + 1)
@@ -49,7 +57,8 @@ let rec peel_parentheses lst =
 
 let rec expression_from_char_list lst =
   let lst = peel_parentheses lst in
-  let _ = print_endline (String.concat " " (List.map (String.make 1) lst)) in
+  (* let _ = print_endline (String.concat " " (List.map (String.make 1) lst))
+     in *)
   let rec find_operand lst acc cnt =
     if cnt < 0 then
       let _ = print_endline "4" in
@@ -58,7 +67,7 @@ let rec expression_from_char_list lst =
       match lst with
       | '(' :: t -> find_operand t (acc @ [ '(' ]) (cnt + 1)
       | ')' :: t -> find_operand t (acc @ [ ')' ]) (cnt - 1)
-      | 'V' :: t ->
+      | 'v' :: t ->
           if cnt = 0 then
             Dis (expression_from_char_list acc, expression_from_char_list t)
           else find_operand t (acc @ [ 'V' ]) cnt
