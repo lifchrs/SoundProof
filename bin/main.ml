@@ -70,13 +70,15 @@ let rec get_command _ =
     with
     | Malformed ->
         type_out_slowly
-          "Malformed. Please make sure you enter in the correct format. Type \
-           \"help\" for help or \"quit\" to quit";
+          "Error, Malformed string detected. Please make sure you enter a \
+           keyword followed by an expression. Type \"help\" for help or \
+           \"quit\" to quit";
         get_command ()
     | Empty ->
         type_out_slowly
-          "Empty. Please make sure you enter in the correct format. Type \
-           \"help\" for help or \"quit\" to quit";
+          "Error, Empty string detected. Please make sure you enter a keyword \
+           followed by an expression. Type \"help\" for help or \"quit\" to \
+           quit";
         get_command ()
 
 (** Repeatedly asks the user for an input and checks if it is equivalent to the
@@ -109,7 +111,9 @@ let rec main () =
       type_out_slowly help_message;
       main ()
   | "start" ->
-      type_out_slowly "Beginning proof process.";
+      type_out_slowly
+        "Beginning proof process. Remember, if at any point you need help, \
+         just type the command \"help\"";
       let _ =
         proof_loop
           (match get_command () with
