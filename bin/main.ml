@@ -49,6 +49,9 @@ let rec get_command _ =
   if String.lowercase_ascii str = "quit" then (
     print_endline "Exiting now.";
     exit 0)
+  else if String.lowercase_ascii str = "help" then (
+    type_out_slowly help_message;
+    get_command ())
   else
     let lst_with_empty = String.split_on_char ' ' str in
     let lst =
@@ -68,12 +71,12 @@ let rec get_command _ =
     | Malformed ->
         type_out_slowly
           "Malformed. Please make sure you enter in the correct format. Type \
-           \"quit\" to quit";
+           \"help\" for help or \"quit\" to quit";
         get_command ()
     | Empty ->
         type_out_slowly
           "Empty. Please make sure you enter in the correct format. Type \
-           \"quit\" to quit";
+           \"help\" for help or \"quit\" to quit";
         get_command ()
 
 (** Repeatedly asks the user for an input and checks if it is equivalent to the
