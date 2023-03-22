@@ -2,6 +2,11 @@ open Verifier
 open Command
 open Logic
 
+type command =
+  | Assume of expression
+  | Show of expression
+  | Verify of expression
+
 let help_message =
   "Thank you for using Proof Verifier supreme. \n"
   ^ "To input your proof, you will enter the statement you want to show, your \
@@ -12,12 +17,13 @@ let help_message =
   ^ "    -Verify R: Use R as next step of proof \n"
   ^ "Any of E, P, R, must only contain conjugation, disjunction, implication, \
      bi-implication, or negation.\n"
-  ^ "These are denoted by \"^\", \"v\", \"=>\", \"<=>\", \"~\" respectively\n"
+  ^ "These are denoted by \"^\", \"v\", \"=>\", \"<=>\", \"!\" respectively\n"
   ^ "Finally, use proper parentheses to certify order of operations. For \
-     example, \n" ^ "\"(P=>Q)^!R\" and \"P=>(Q^!R)\" are both proper syntax. \n"
-  ^ "Good luck and happy proving!"
+     example, \n"
+  ^ "\"(P=>Q)^!R\" and \"P=>(Q^!R)\" are both proper syntax with different \
+     meanings. \n" ^ "Good luck and happy proving!"
 
-(** Prints provided string by character instead of at once *)
+(** Causes string to appear like it is printing by letter instead of appearing *)
 let type_out_slowly str =
   let len = String.length str in
   let rec loop i =
@@ -31,96 +37,97 @@ let type_out_slowly str =
   loop 0;
   print_newline ()
 
-(** Checks if the previous input and current input have same truth values*)
-let rec proof_loop prev =
+(** Checks if input is valid, and returns proper command if it is. Otherwise,
+    asks the user to re-input a command *)
+let rec get_command _ =
   let str =
     try read_line ()
     with End_of_file ->
       print_endline "Exiting now.";
       exit 0
   in
-  if str = "quit" then exit 0
+  if String.lowercase_ascii str = "quit" then (
+    print_endline "Exiting now.";
+    exit 0)
   else
-    let new_input =
-      try
-        match parse str with
-        | Assume e -> e
-        | Show e -> e
-        | Verify e -> e
-      with
-      | Malformed ->
-          print_endline
-            "Malformed. Please make sure you enter in the correct format";
-          proof_loop prev
-      | Empty ->
-          print_endline
-            "Empty. Please make sure you enter in the correct format";
-          proof_loop prev
+    let lst_with_empty = String.split_on_char ' ' str in
+    let lst =
+      List.fold_right
+        (fun x acc -> if x <> "" then x :: acc else acc)
+        lst_with_empty []
     in
-    if compare prev new_input then (
-      print_endline "Step is logically sound!";
-      proof_loop new_input)
-    else (
-      print_endline "Incorrect Step. Terminating proof.";
-      exit 0)
-
-(** Gets first input from user *)
-let rec start_proof _ =
-  let str =
-    try read_line ()
-    with End_of_file ->
-      print_endline "Exiting now.";
-      exit 0
-  in
-  if str = "quit" then exit 0
-  else
     try
-      let prev =
-        match parse str with
-        | Assume e -> e
-        | Show e -> e
-        | Verify e -> e
-      in
-      proof_loop prev
+      match lst with
+      | [] -> raise Empty
+      | h :: t ->
+          if h = "Assume" then Assume (parse t)
+          else if h = "Show" then Show (parse t)
+          else if h = "Verify" then Verify (parse t)
+          else raise Malformed
     with
     | Malformed ->
-        print_endline
-          "Malformed. Please make sure you enter in the correct format";
-        start_proof ()
+        type_out_slowly
+          "Malformed. Please make sure you enter in the correct format. Type \
+           \"quit\" to quit";
+        get_command ()
     | Empty ->
-        print_endline "Empty. Please make sure you enter in the correct format";
-        start_proof ()
+        type_out_slowly
+          "Empty. Please make sure you enter in the correct format. Type \
+           \"quit\" to quit";
+        get_command ()
+
+(** Repeatedly asks the user for an input and checks if it is equivalent to the
+    previous input. Currently only terminates upon entering "quit" or an invalid
+    step*)
+let rec proof_loop prev_input =
+  let new_input =
+    match get_command () with
+    | Assume e -> (* ASSUME FUNCTIONALITY GOES HERE*) e
+    | Show e -> (* SHOW FUNCTIONALITY GOES HERE*) e
+    | Verify e -> (* VERIFY FUNCTIONALITY GOES HERE*) e
+  in
+  if compare prev_input new_input then (
+    type_out_slowly "Step is logically sound!";
+    proof_loop new_input)
+  else (
+    type_out_slowly "Incorrect Step. Terminating proof.";
+    exit 0)
 
 (** [main ()] prompts for the game to play, then starts it. *)
 let rec main () =
-  match read_line () with
-  | exception End_of_file -> ()
-  | "help" | "Help" | "HELP" ->
+  match
+    String.lowercase_ascii
+      (try read_line ()
+       with End_of_file ->
+         print_endline "Exiting now.";
+         exit 0)
+  with
+  | "help" ->
       type_out_slowly help_message;
       main ()
-  | "start proof"
-  | "Start proof"
-  | "Start Proof"
-  | "START PROOF"
-  | "start"
-  | "Start"
-  | "START" ->
-      print_endline "Beginning proof process.";
-      let _ = start_proof () in
+  | "start" ->
+      type_out_slowly "Beginning proof process.";
+      let _ =
+        proof_loop
+          (match get_command () with
+          | Assume e -> (* ASSUME FUNCTIONALITY GOES HERE*) e
+          | Show e -> (* SHOW FUNCTIONALITY GOES HERE*) e
+          | Verify e -> (* VERIFY FUNCTIONALITY GOES HERE*) e)
+      in
       ()
-  | "quit" | "Quit" | "QUIT" ->
+  | "quit" ->
       print_endline "Exiting now.";
       exit 0
   | _ ->
-      print_endline
-        "Unknown command. If you want to start your proof, type \"Verify\", or \
+      type_out_slowly
+        "Unknown command. If you want to start your proof, type \"start\", or \
          \"help\" for more information";
       main ()
 
 (* Execute the game engine. *)
 let () =
   print_endline "";
-  print_endline
+  type_out_slowly
     "Please use the command \"start\" to begin your proof, or \"help\" for \
      more information";
   main ()

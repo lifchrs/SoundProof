@@ -10,7 +10,6 @@ let rec get_props (e : Command.expression) : char list =
   | Impl (e1, e2) -> get_props e1 @ get_props e2
   | Bi (e1, e2) -> get_props e1 @ get_props e2
   | Neg e1 -> get_props e1
-  | _ -> []
 
 (** Determines if an expression is true or false, given the truth values of all
     it's propositions. Requires: [prop_vals] contains a [prop, value] pair for
@@ -18,8 +17,6 @@ let rec get_props (e : Command.expression) : char list =
 let rec eval_prop (prop_vals : (char * bool) list) (e : Command.expression) :
     bool =
   match e with
-  | True -> true
-  | False -> false
   | Prop c -> List.assoc c prop_vals
   | Dis (e1, e2) -> eval_prop prop_vals e1 || eval_prop prop_vals e2
   | Conj (e1, e2) -> eval_prop prop_vals e1 && eval_prop prop_vals e2

@@ -1,25 +1,10 @@
-type binary_op =
-  | Conj
-  | Dis
-  | Impl
-  | Bi
-
-type unary_op = Neg
-
 type expression =
-  | True
-  | False
   | Prop of char
   | Dis of expression * expression
   | Conj of expression * expression
   | Impl of expression * expression
   | Bi of expression * expression
   | Neg of expression
-
-type command =
-  | Assume of expression
-  | Show of expression
-  | Verify of expression
 
 exception Empty
 exception Malformed
@@ -91,16 +76,11 @@ let rec expression_from_char_list lst =
           if cnt = 0 then Neg (expression_from_char_list t)
           else find_operand t (acc @ [ '!' ]) cnt
       | h :: t -> find_operand t (acc @ [ h ]) cnt
-      | [] ->
-          let _ = print_endline "5" in
-          raise Malformed
+      | [] -> raise Malformed
   in
   match lst with
   | [ a ] ->
-      if a |> Char.code |> is_proposition then Prop a
-      else
-        let _ = print_endline "6" in
-        raise Malformed
+      if a |> Char.code |> is_proposition then Prop a else raise Malformed
   | '!' :: t -> Neg (expression_from_char_list t)
   | _ -> find_operand lst [] 0
 
@@ -114,21 +94,16 @@ let expression_from_logic str =
   let spaces_removed = List.rev spaces_removed_rev in
   expression_from_char_list spaces_removed
 
-let parse (str : string) =
-  let lst_with_empty = String.split_on_char ' ' str in
-  let lst =
-    List.fold_right
-      (fun x acc -> if x <> "" then x :: acc else acc)
-      lst_with_empty []
-  in
-  let _ = if lst = [] then raise Empty in
+let parse (lst : string list) =
   match lst with
-  | [] -> raise (Failure "shouldn't reach this")
-  | h :: t ->
-      if h = "Assume" then
-        if t <> [] then Assume (expression_from_logic t) else raise Malformed
-      else if h = "Show" then
-        if t <> [] then Show (expression_from_logic t) else raise Malformed
-      else if h = "Verify" then
-        if t <> [] then Verify (expression_from_logic t) else raise Malformed
-      else raise Malformed
+  | [] -> raise Empty
+  | _ -> expression_from_logic lst
+
+let rec string_of_expr expr =
+  match expr with
+  | Prop a -> "(" ^ String.make 1 a ^ ")"
+  | Dis (a, b) -> "(" ^ string_of_expr a ^ "v" ^ string_of_expr b ^ ")"
+  | Conj (a, b) -> "(" ^ string_of_expr a ^ "^" ^ string_of_expr b ^ ")"
+  | Impl (a, b) -> "(" ^ string_of_expr a ^ "=>" ^ string_of_expr b ^ ")"
+  | Bi (a, b) -> "(" ^ string_of_expr a ^ "<=>" ^ string_of_expr b ^ ")"
+  | Neg a -> "(" ^ "!" ^ string_of_expr a ^ ")"
