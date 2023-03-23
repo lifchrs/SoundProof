@@ -24,15 +24,10 @@ finalcheck:
 	@bash check.sh final
 
 zip:
-	rm -f adventure.zip
-	zip -r adventure.zip . -x@exclude.lst
+	rm -f verifier.zip
+	zip -r verifier.zip . -x@exclude.lst
 
 clean:
 	dune clean
-	rm -f adventure.zip
+	rm -f verifier.zip
 
-doc:
-	dune build @doc
-
-opendoc: doc
-	@bash opendoc.sh
