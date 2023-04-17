@@ -1,6 +1,5 @@
 open Verifier
 open Command
-open Logic
 
 type command =
   | Assume of expression
@@ -84,19 +83,17 @@ let rec get_command _ =
 (** Repeatedly asks the user for an input and checks if it is equivalent to the
     previous input. Currently only terminates upon entering "quit" or an invalid
     step*)
-let rec proof_loop prev_input =
-  let new_input =
-    match get_command () with
-    | Assume e -> (* ASSUME FUNCTIONALITY GOES HERE*) e
-    | Show e -> (* SHOW FUNCTIONALITY GOES HERE*) e
-    | Verify e -> (* VERIFY FUNCTIONALITY GOES HERE*) e
-  in
-  if compare prev_input new_input then (
-    type_out_slowly "Step is logically sound!";
-    proof_loop new_input)
-  else (
-    type_out_slowly "Incorrect Step. Terminating proof.";
-    exit 0)
+let rec proof_loop _ =
+  match get_command () with
+  | Assume e ->
+      Proof.add_to_history e true;
+      proof_loop ()
+  | Show e ->
+      Proof.set_current_goal (Some e);
+      proof_loop ()
+  | Verify e ->
+      Proof.add_to_history e false;
+      proof_loop ()
 
 (** [main ()] prompts for the game to play, then starts it. *)
 let rec main () =
@@ -114,13 +111,7 @@ let rec main () =
       type_out_slowly
         "Beginning proof process. Remember, if at any point you need help, \
          just type the command \"help\"";
-      let _ =
-        proof_loop
-          (match get_command () with
-          | Assume e -> (* ASSUME FUNCTIONALITY GOES HERE*) e
-          | Show e -> (* SHOW FUNCTIONALITY GOES HERE*) e
-          | Verify e -> (* VERIFY FUNCTIONALITY GOES HERE*) e)
-      in
+      let _ = proof_loop () in
       ()
   | "quit" ->
       print_endline "Exiting now.";
