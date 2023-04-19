@@ -29,9 +29,7 @@ let parse_logic_tests =
         ([ "!AvB" ] |> parse_logic |> string_of_logic_expr) );
     ( "(A v B) ^ C (V vs v test))" >:: fun _ ->
       assert_equal "(((A)v(B))^(C))"
-        (let x = [ "(AvB)^C" ] |> parse_logic |> string_of_logic_expr in
-         print_endline x;
-         x) );
+        ([ "(AvB)^C" ] |> parse_logic |> string_of_logic_expr) );
   ]
 
 let parse_sets_tests =
@@ -49,6 +47,9 @@ let parse_sets_tests =
     ( "difference of sets" >:: fun _ ->
       assert_equal "((A)\\(B))" ([ "A\\B" ] |> parse_set |> string_of_set_expr)
     );
+    ( "(A v B) ^ C (V vs v test))" >:: fun _ ->
+      assert_equal "(((A)v(B))^(C))"
+        ([ "(AvB)^C" ] |> parse_set |> string_of_set_expr) );
   ]
 
 let suite =
