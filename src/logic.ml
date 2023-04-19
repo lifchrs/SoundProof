@@ -1,4 +1,5 @@
-(** [pow x y] returns [x^y] *)
+(**
+    (** [pow x y] returns [x^y] *)
 let rec two_pow x = if x = 0 then 1 else 2 * two_pow (x - 1)
 
 (** Get a list of the names of all Propositions in an expression *)
@@ -55,3 +56,4 @@ let rec compare_rec (e1 : Command.expression) (e2 : Command.expression)
 let compare (e1 : Command.expression) (e2 : Command.expression) =
   let props = get_props e1 @ get_props e2 |> List.sort_uniq Stdlib.compare in
   compare_rec e1 e2 props (two_pow (List.length props) - 1)
+  *)
