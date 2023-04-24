@@ -101,6 +101,6 @@ let rec compare_set_rec (e1 : Command.set_expression)
 (** Returns: true if and only if an element which is in some primary sets and
     not in others, for all possible configurations of being in some sets and not
     in others, is not a member of the set [e1] or is a member of the set [e2] *)
-let compare_set (e1 : Command.set_expression) (e2 : Command.set_expression) =
+let compare_sets (e1 : Command.set_expression) (e2 : Command.set_expression) =
   let sets = get_sets e1 @ get_sets e2 |> List.sort_uniq Stdlib.compare in
   compare_set_rec e1 e2 sets (two_pow (List.length sets) - 1)

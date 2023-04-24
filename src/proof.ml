@@ -1,6 +1,6 @@
 let current_goal : Command.logic_expression option ref = ref None
 let history : Command.logic_expression list ref = ref []
-let compare_all e = List.map (fun x -> Logic.compare e x) !history
+let compare_all e = List.map (fun x -> Logic.compare_logic e x) !history
 
 (** [pp_string s] pretty-prints string [s]. *)
 let pp_string s = "\"" ^ s ^ "\""
