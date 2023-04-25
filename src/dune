@@ -1,3 +1,6 @@
 (library
  (name verifier)
- (public_name Verifier))
+ (public_name Verifier)
+ (libraries str unix)
+ (instrumentation
+  (backend bisect_ppx)))

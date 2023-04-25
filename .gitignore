@@ -1,3 +1,7 @@
+# docs
+_doc.public
+_doc.private
+
 # ocaml
 *.cmo
 *.cma
@@ -7,6 +11,10 @@
 *.native
 *.byte
 _build
+
+# bisect
+_coverage
+bisect*.coverage
 
 # temporary files
 *.swp
