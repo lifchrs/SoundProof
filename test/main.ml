@@ -106,6 +106,10 @@ let compare_logic_tests =
       (Conj (Impl (Prop 'A', Prop 'B'), Impl (Prop 'B', Prop 'A')))
       (Dis (Prop 'A', Prop 'B'))
       false;
+    compare_logic_test "A ^ not(B) implies not(A <=> B)"
+      (Conj (Prop 'A', Neg (Prop 'B')))
+      (Neg (Bi (Prop 'A', Prop 'B')))
+      true;
   ]
 
 let compare_sets_tests =
