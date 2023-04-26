@@ -1,4 +1,4 @@
-(** Parsing of user's commands. *)
+(**Parsing of user's commands. *)
 
 type logic_expression =
   | Prop of char
@@ -22,6 +22,17 @@ exception Malformed
 (** Raised when a malformed expression is parsed. *)
 
 val parse_logic : string list -> logic_expression
+(** parse_logic generates a logic_expression corresponding to the logic command
+    represented by the string list entered*)
+
 val string_of_logic_expr : logic_expression -> string
+(**Creates a textual representation of a logical expression using the same
+   notation required for input*)
+
 val parse_set : string list -> set_expression
+(** parse_set generates a set_expression corresponding to the set command
+    represented by the string list entered*)
+
 val string_of_set_expr : set_expression -> string
+(**Creates a textual representation of a set expression using the same notation
+   required for input*)
