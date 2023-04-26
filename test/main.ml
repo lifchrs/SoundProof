@@ -34,9 +34,22 @@ let parse_logic_tests =
     parse_logic_error_test "logic raises malformed error" Malformed [ "A<==>B" ];
     parse_logic_error_test "No capitalisation raises malformed error" Malformed
       [ "a" ];
-    parse_logic_error_test "Empty list raises empty" Empty [];
+    parse_logic_error_test "Empty string list raises empty" Empty [];
     parse_logic_test "!A v B test" "(!((A)v(B)))" "!AvB";
     parse_logic_test "(A v B) ^ C (V vs v test))" "(((A)v(B))^(C))" "(AvB)^C";
+    parse_logic_test "left parens peeling" "(A)" "((A))";
+    parse_logic_error_test "raises malformed with incorrect expression"
+      Malformed [ "(()" ];
+    parse_logic_test "testing ^ when more is to be read" "(((A)^(B))v((C)^(D)))"
+      "(A^B) v (C^D)";
+    parse_logic_test "testing ! when more is to be read" "((!(B))v(!(D)))"
+      "(!B) v (!D)";
+    parse_logic_error_test "raises malformed with unbalanced parens" Malformed
+      [ "())" ];
+    parse_logic_test "testing => when more is to be read"
+      "(((A)=>(B))v((C)=>(D)))" "(A=>B) v (C=>D)";
+    parse_logic_test "testing <=> when more is to be read"
+      "(((A)<=>(B))v((C)<=>(D)))" "(A<=>B) v (C<=>D)";
   ]
 
 (** [parse_set_test name expected_output input] constructs an OUnit test named
@@ -67,6 +80,21 @@ let parse_sets_tests =
       [ "A vv B" ];
     parse_set_test "difference of sets" "((A)\\(B))" "A\\B";
     parse_set_test "(A v B) ^ C (V vs v test))" "(((A)v(B))^(C))" "(AvB)^C";
+    parse_set_error_test "Empty string list raises empty" Empty [];
+    parse_set_test "testing ^ when more is to be read" "(((A)^(B))v((C)^(D)))"
+      "(A^B) v (C^D)";
+    parse_set_test "testing Comp when more is to be read"
+      "((Comp(B))v(Comp(D)))" "(Comp(B)) v (Comp(D))";
+    parse_set_test "testing \\ when more is to be read"
+      "(((A)\\(B))v((C)\\(D)))" "(A\\B) v (C\\D)";
+    parse_set_error_test "raises malformed with unbalanced parens" Malformed
+      [ "())" ];
+    parse_set_test "complement of lone set" "(Comp(A))" "Comp (A)";
+    parse_set_error_test "Set must be capitalised" Malformed [ "a" ];
+    parse_set_error_test "raises malformed with incorrect expression" Malformed
+      [ "(()" ];
+    parse_set_error_test "raises malformed with incorrect expression AB"
+      Malformed [ "AB" ];
   ]
 
 (* Testing for Logic compilation unit *)

@@ -80,8 +80,7 @@ and find_operand_logic lst acc cnt =
         if cnt = 0 then Bi (get_expr acc, get_expr t)
         else find_operand t (acc @ ('<' :: '=' :: [ '>' ])) cnt
     | [ a ] ->
-        if acc = [] then
-          if a |> Char.code |> is_capital then Prop a else raise Malformed
+        if acc = [] && a |> Char.code |> is_capital then Prop a
         else raise Malformed
     | h :: t -> find_operand t (acc @ [ h ]) cnt
     | [] -> raise Malformed
@@ -147,17 +146,16 @@ and find_operand_set lst acc cnt =
         if cnt = 0 then Comp (get_expr t)
         else find_operand t (acc @ ('C' :: 'o' :: 'm' :: [ 'p' ])) cnt
     | [ a ] ->
-        if acc = [] then
-          if a |> Char.code |> is_capital then Set a else raise Malformed
+        if acc = [] && a |> Char.code |> is_capital then Set a
         else raise Malformed
     | h :: t -> find_operand t (acc @ [ h ]) cnt
     | [] -> raise Malformed
 
 and set_expression_from_char_list lst =
   let lst = peel_parentheses lst in
-  match lst with
-  | [ a ] -> if a |> Char.code |> is_capital then Set a else raise Malformed
-  | _ -> find_operand_set lst [] 0
+  find_operand_set lst [] 0
+(* match lst with | [ a ] -> if a |> Char.code |> is_capital then Set a else
+   raise Malformed | _ -> find_operand_set lst [] 0 *)
 
 let expression_from_set str =
   let exploded_str = List.fold_left (fun acc x -> acc @ explode x) [] str in
