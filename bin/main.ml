@@ -1,13 +1,25 @@
 open Verifier
 open Command
 
-type command =
-  | AssumeLogic of logic_expression
-  | ShowLogic of logic_expression
-  | VerifyLogic of logic_expression
-  | AssumeSet of set_expression
-  | ShowSet of set_expression
-  | VerifySet of set_expression
+module LOGIC = struct
+  type t = Command.logic_expression
+
+  let compare x y = Logic.compare_logic x y
+  let to_string x = Command.string_of_logic_expr x
+end
+
+module LOGIC_PROOF = Proof.Make (LOGIC)
+
+module SET = struct
+  type t = Command.set_expression
+
+  let compare x y = Logic.compare_sets x y
+  let to_string x = Command.string_of_set_expr x
+end
+
+module SET_PROOF = Proof.Make (SET)
+
+let proof_type = ref ""
 
 let help_message =
   "Thank you for using Proof Verifier supreme. \n"
@@ -44,7 +56,7 @@ let type_out_slowly str =
 
 (** Checks if input is valid, and returns proper command if it is. Otherwise,
     asks the user to re-input a command *)
-let rec get_command (proof_type : string) =
+let rec get_command () =
   let str =
     try read_line ()
     with End_of_file ->
@@ -56,7 +68,7 @@ let rec get_command (proof_type : string) =
     exit 0)
   else if String.lowercase_ascii str = "help" then (
     type_out_slowly help_message;
-    get_command proof_type)
+    get_command ())
   else
     let lst_with_empty = String.split_on_char ' ' str in
     let lst =
@@ -64,25 +76,33 @@ let rec get_command (proof_type : string) =
         (fun x acc -> if x <> "" then x :: acc else acc)
         lst_with_empty []
     in
+    match lst with
+    | [] -> raise Empty
+    | h :: t -> (h, t)
+
+(** Repeatedly asks the user for an input and checks if it is equivalent to the
+    previous input. Currently only terminates upon entering "quit" or an invalid
+    step*)
+let rec proof_loop () =
+  let _ =
     try
-      match proof_type with
+      let cmd, expr_str = get_command () in
+      match !proof_type with
       | "logic" -> (
-          match lst with
-          | [] -> raise Empty
-          | h :: t ->
-              if h = "Assume" then AssumeLogic (parse_logic t)
-              else if h = "Show" then ShowLogic (parse_logic t)
-              else if h = "Verify" then VerifyLogic (parse_logic t)
-              else raise Malformed)
+          let expr = parse_logic expr_str in
+          match cmd with
+          | "Assume" -> LOGIC_PROOF.add_to_history expr true
+          | "Show" -> LOGIC_PROOF.set_curr_goal (Some expr)
+          | "Verify" -> LOGIC_PROOF.add_to_history expr false
+          | _ -> raise Malformed)
       | "set" -> (
-          match lst with
-          | [] -> raise Empty
-          | h :: t ->
-              if h = "Assume" then AssumeSet (parse_set t)
-              else if h = "Show" then ShowSet (parse_set t)
-              else if h = "Verify" then VerifySet (parse_set t)
-              else raise Malformed)
-      | _ -> failwith "Should not happen"
+          let expr = parse_set expr_str in
+          match cmd with
+          | "Assume" -> SET_PROOF.add_to_history expr true
+          | "Show" -> SET_PROOF.set_curr_goal (Some expr)
+          | "Verify" -> SET_PROOF.add_to_history expr false
+          | _ -> raise Malformed)
+      | _ -> failwith "should not happen"
     with
     | Malformed ->
         type_out_slowly
@@ -90,45 +110,15 @@ let rec get_command (proof_type : string) =
           \    detected. Please make sure you enter a  keyword followed by an \
            expression.\n\
           \    Type \"help\" for help or  \"quit\" to quit";
-        get_command proof_type
+        proof_loop ()
     | Empty ->
         type_out_slowly
           "Error, Empty string detected. Please make sure you enter a\n\
           \    keyword  followed by an expression. Type \"help\" for help or \
            \"quit\" to quit";
-        get_command proof_type
-
-(** Repeatedly asks the user for an input and checks if it is equivalent to the
-    previous input. Currently only terminates upon entering "quit" or an invalid
-    step*)
-let rec proof_loop_logic _ =
-  match get_command "logic" with
-  | AssumeLogic e ->
-      Proof.add_to_logic_history e true;
-      proof_loop_logic ()
-  | ShowLogic e ->
-      Proof.set_current_logic_goal (Some e);
-      proof_loop_logic ()
-  | VerifyLogic e ->
-      Proof.add_to_logic_history e false;
-      proof_loop_logic ()
-  | _ -> failwith "Should not happen"
-
-(** Repeatedly asks the user for an input and checks if it is equivalent to the
-    previous input. Currently only terminates upon entering "quit" or an invalid
-    step*)
-let rec proof_loop_set _ =
-  match get_command "set" with
-  | AssumeSet e ->
-      Proof.add_to_set_history e true;
-      proof_loop_set ()
-  | ShowSet e ->
-      Proof.set_current_set_goal (Some e);
-      proof_loop_set ()
-  | VerifySet e ->
-      Proof.add_to_set_history e false;
-      proof_loop_set ()
-  | _ -> failwith "Should not happen"
+        proof_loop ()
+  in
+  proof_loop ()
 
 (** [main ()] prompts for the game to play, then starts it. *)
 let rec main () =
@@ -147,15 +137,15 @@ let rec main () =
         "Beginning logic proof process.\n\
         \    Remember, if at any point you need help,  just type the command \
          \"help\"";
-      let _ = proof_loop_logic () in
-      ()
+      proof_type := "logic";
+      proof_loop
   | "start set" ->
       type_out_slowly
         "Beginning set proof process.\n\
         \    Remember, if at any point you need help,  just type the command \
          \"help\"";
-      let _ = proof_loop_set () in
-      ()
+      proof_type := "set";
+      proof_loop
   | "quit" ->
       print_endline "Exiting now.";
       exit 0
@@ -171,4 +161,4 @@ let () =
   type_out_slowly
     "Please use the command \"start logic\" or \"start set\" to begin your \
      proof, or \"help\" for more information";
-  main ()
+  main () ()
