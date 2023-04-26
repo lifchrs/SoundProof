@@ -1,6 +1,4 @@
-(** Dictionaries implemented as association lists. *)
+(** Storage of previous stages and current task in proof. *)
 
-open Prooftype
-
-module Make : ProofMaker
-(** [Make] makes a [Dictionary] implemented with association lists. *)
+module Make : Prooftype.ProofMaker
+(** [Make] makes a [ProofType] of desired type. *)
