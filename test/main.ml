@@ -5,54 +5,68 @@ open Logic
 
 (* Testing for Command compilation unit *)
 
+(** [parse_logic_test name expected_output input] constructs an OUnit test named
+    [name] that asserts the quality of [expected_output] with
+    [\[input\] |> parse_logic |> string_of_logic_expr]. *)
+let parse_logic_test (name : string) (expected_output : string) (e1 : string) :
+    test =
+  name >:: fun _ ->
+  assert_equal expected_output
+    ([ e1 ] |> parse_logic |> string_of_logic_expr)
+    ~printer:(fun x -> x)
+
+(** [parse_logic_error_test name expected_output input] constructs an OUnit test
+    named [name] that asserts that [expected_output] is raised when is run
+    [input parse_logic |> string_of_logic_expr]. *)
+let parse_logic_error_test (name : string) (expected_output : exn)
+    (e1 : string list) : test =
+  name >:: fun _ ->
+  assert_raises expected_output (fun () ->
+      e1 |> parse_logic |> string_of_logic_expr)
+
 let parse_logic_tests =
   [
-    ( "conjunction of proposition" >:: fun _ ->
-      assert_equal "((A)^(B))" ([ "A^B" ] |> parse_logic |> string_of_logic_expr)
-    );
-    ( "disjunction of proposition" >:: fun _ ->
-      assert_equal "((A)v(B))" ([ "AvB" ] |> parse_logic |> string_of_logic_expr)
-    );
-    ( "negation of proposition" >:: fun _ ->
-      assert_equal "(!(A))" ([ "!A" ] |> parse_logic |> string_of_logic_expr) );
-    ( "implication of propositions" >:: fun _ ->
-      assert_equal "((A)=>(B))"
-        ([ "A=>B" ] |> parse_logic |> string_of_logic_expr) );
-    ( "biimplication of propositions" >:: fun _ ->
-      assert_equal "((A)<=>(B))"
-        ([ "A<=>B" ] |> parse_logic |> string_of_logic_expr) );
-    ( "logic raises malformed error" >:: fun _ ->
-      assert_raises Malformed (fun () ->
-          [ "A<==>B" ] |> parse_logic |> string_of_logic_expr) );
-    ( "No capitalisation raises malformed error" >:: fun _ ->
-      assert_raises Malformed (fun () ->
-          [ "a" ] |> parse_logic |> string_of_logic_expr) );
-    ( "!A v B test" >:: fun _ ->
-      assert_equal "(!((A)v(B)))"
-        ([ "!AvB" ] |> parse_logic |> string_of_logic_expr) );
-    ( "(A v B) ^ C (V vs v test))" >:: fun _ ->
-      assert_equal "(((A)v(B))^(C))"
-        ([ "(AvB)^C" ] |> parse_logic |> string_of_logic_expr) );
+    parse_logic_test "conjunction of proposition" "((A)^(B))" "A^B";
+    parse_logic_test "disjunction of proposition" "((A)v(B))" "AvB";
+    parse_logic_test "negation of proposition" "(!(A))" "!A";
+    parse_logic_test "implication of propositions" "((A)=>(B))" "A=>B";
+    parse_logic_test "biimplication of propositions" "((A)<=>(B))" "A<=>B";
+    parse_logic_error_test "logic raises malformed error" Malformed [ "A<==>B" ];
+    parse_logic_error_test "No capitalisation raises malformed error" Malformed
+      [ "a" ];
+    parse_logic_error_test "Empty list raises empty" Empty [];
+    parse_logic_test "!A v B test" "(!((A)v(B)))" "!AvB";
+    parse_logic_test "(A v B) ^ C (V vs v test))" "(((A)v(B))^(C))" "(AvB)^C";
   ]
+
+(** [parse_set_test name expected_output input] constructs an OUnit test named
+    [name] that asserts the quality of [expected_output] with
+    [\[input\] |> parse_set |> string_of_set_expr]. *)
+let parse_set_test (name : string) (expected_output : string) (e1 : string) :
+    test =
+  name >:: fun _ ->
+  assert_equal expected_output
+    ([ e1 ] |> parse_set |> string_of_set_expr)
+    ~printer:(fun x -> x)
+
+(** [parse_logic_error_test name expected_output input] constructs an OUnit test
+    named [name] that asserts that [expected_output] is raised when is run
+    [input parse_logic |> string_of_logic_expr]. *)
+let parse_set_error_test (name : string) (expected_output : exn)
+    (e1 : string list) : test =
+  name >:: fun _ ->
+  assert_raises expected_output (fun () ->
+      e1 |> parse_set |> string_of_set_expr)
 
 let parse_sets_tests =
   [
-    ( "intersection of sets" >:: fun _ ->
-      assert_equal "((A)^(B))" ([ "A^B" ] |> parse_set |> string_of_set_expr) );
-    ( "union of sets" >:: fun _ ->
-      assert_equal "((A)v(B))" ([ "AvB" ] |> parse_set |> string_of_set_expr) );
-    ( "complement of set" >:: fun _ ->
-      assert_equal "(Comp(A))"
-        ([ "Comp (A)" ] |> parse_set |> string_of_set_expr) );
-    ( "set raises malformed error" >:: fun _ ->
-      assert_raises Malformed (fun () ->
-          [ "A vv B" ] |> parse_set |> string_of_set_expr) );
-    ( "difference of sets" >:: fun _ ->
-      assert_equal "((A)\\(B))" ([ "A\\B" ] |> parse_set |> string_of_set_expr)
-    );
-    ( "(A v B) ^ C (V vs v test))" >:: fun _ ->
-      assert_equal "(((A)v(B))^(C))"
-        ([ "(AvB)^C" ] |> parse_set |> string_of_set_expr) );
+    parse_set_test "intersection of sets" "((A)^(B))" "A^B";
+    parse_set_test "union of sets" "((A)v(B))" "AvB";
+    parse_set_test "complement of set" "(Comp(A))" "Comp (A)";
+    parse_set_error_test "improper syntax (vv) raises malformed error" Malformed
+      [ "A vv B" ];
+    parse_set_test "difference of sets" "((A)\\(B))" "A\\B";
+    parse_set_test "(A v B) ^ C (V vs v test))" "(((A)v(B))^(C))" "(AvB)^C";
   ]
 
 (* Testing for Logic compilation unit *)
@@ -154,7 +168,7 @@ let compare_sets_tests =
   ]
 
 let suite =
-  "test suite for A2"
+  "test suite for project"
   >::: List.flatten
          [
            parse_logic_tests;

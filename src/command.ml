@@ -46,7 +46,7 @@ let rec peel_parentheses lst =
       if can_peel t 0 then
         match List.rev t with
         | ')' :: t -> peel_parentheses (List.rev t)
-        | _ -> failwith "Shouldn't happen"
+        | _ -> failwith "Shouldn't happen" [@coverage off]
       else lst
   | _ -> lst
 
@@ -63,7 +63,7 @@ let rec match_singles_logic lst cnt acc find_operand get_expr =
       else find_operand t (acc @ [ '^' ]) cnt
   | '!' :: t ->
       if cnt = 0 then Neg (get_expr t) else find_operand t (acc @ [ '!' ]) cnt
-  | _ -> failwith "never happens"
+  | _ -> failwith "never happens" [@coverage off]
 
 and find_operand_logic lst acc cnt =
   if cnt < 0 then raise Malformed
@@ -131,7 +131,7 @@ let rec match_singles_set lst cnt acc find_operand get_expr =
   | '\\' :: t ->
       if cnt = 0 then Difference (get_expr acc, get_expr t)
       else find_operand t (acc @ [ '\\' ]) cnt
-  | _ -> failwith "never happens"
+  | _ -> failwith "never happens" [@coverage off]
 
 and find_operand_set lst acc cnt =
   (* let _ = print_endline (String.concat " " (List.map (String.make 1) lst))
