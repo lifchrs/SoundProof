@@ -6,6 +6,11 @@ module LOGIC = struct
 
   let compare x y = Logic.compare_logic x y
   let to_string x = Command.string_of_logic_expr x
+
+  let comparison lst e =
+    match lst with
+    | [] -> false
+    | acc :: t -> compare (List.fold_left (fun x acc -> Conj (x, acc)) acc t) e
 end
 
 module LOGIC_PROOF = Proof.Make (LOGIC)
@@ -15,6 +20,11 @@ module SET = struct
 
   let compare x y = Logic.compare_sets x y
   let to_string x = Command.string_of_set_expr x
+
+  let comparison lst e =
+    match lst with
+    | [] -> false
+    | _ -> compare (List.hd (List.rev lst)) e
 end
 
 module SET_PROOF = Proof.Make (SET)

@@ -29,7 +29,6 @@ functor
 
     let curr_goal : expr option ref = ref None
     let history : expr list ref = ref []
-    let compare_all e = List.map (fun x -> T.compare x e) !history
 
     let set_curr_goal e =
       match e with
@@ -54,21 +53,19 @@ functor
             print_endline "Goal shown! Please enter a new goal";
             curr_goal := None)
 
+    (** Verifies if an expression is sound based on previous expressions. If [b]
+        is [true] then verifies among all previous steps, and if [b] is false
+        then verifies among previous step*)
     let verify_new_step (e : expr) =
-      let temp = compare_all e in
-      if List.exists (fun x -> x) temp then (
+      if T.comparison !history e then (
         history := !history @ [ e ];
         compare_with_goal e)
       else
         print_endline
-          "Entered step not logically equivalent to any previous step";
+          "Entered step not logically equivalent with comparison method";
       print_endline
         ("Previous steps: "
-        ^ pp_list pp_string (List.map (fun x -> T.to_string x) !history));
-      print_endline
-        ("Equivalence: "
-        ^ pp_list pp_string
-            (List.map (fun x -> if x then "True" else "False") temp))
+        ^ pp_list pp_string (List.map (fun x -> T.to_string x) !history))
 
     let add_to_history (e : expr) force =
       if force then (

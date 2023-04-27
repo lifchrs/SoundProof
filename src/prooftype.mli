@@ -8,6 +8,9 @@ module type BasicFunctions = sig
 
   val to_string : t -> string
   (** [to_string v] is a textual representation of [v]. *)
+
+  val comparison : t list -> t -> bool
+  (** [comparison t_lst t] checks t with the desired expressions from t_lst*)
 end
 
 (** A module that matches [ProofType] is suitable for use as the type of proof
@@ -37,7 +40,8 @@ module type ProofStorage = sig
   (** Gets history of all previous steps in proof *)
 
   val add_to_history : expr -> bool -> unit
-  (** Adds expression to proof history*)
+  (** Adds expression to proof history, comparing it to the current history
+      based on [comparison]*)
 end
 
 (** A [ProofMaker] is a functor that makes [ProofStorage] out of a module

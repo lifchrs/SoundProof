@@ -3,6 +3,7 @@ module type BasicFunctions = sig
 
   val compare : t -> t -> bool
   val to_string : t -> string
+  val comparison : t list -> t -> bool
 end
 
 module type ProofType = sig
