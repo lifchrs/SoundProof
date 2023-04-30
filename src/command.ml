@@ -62,7 +62,8 @@ let rec match_singles_logic lst cnt acc find_operand get_expr =
       if cnt = 0 then Conj (get_expr acc, get_expr t)
       else find_operand t (acc @ [ '^' ]) cnt
   | '!' :: t ->
-      if cnt = 0 then Neg (get_expr t) else find_operand t (acc @ [ '!' ]) cnt
+      if cnt = 0 then if acc = [] then Neg (get_expr t) else raise Malformed
+      else find_operand t (acc @ [ '!' ]) cnt
   | _ -> failwith "never happens" [@coverage off]
 
 and find_operand_logic lst acc cnt =
@@ -143,7 +144,7 @@ and find_operand_set lst acc cnt =
     | '(' :: _ | ')' :: _ | 'v' :: _ | '^' :: _ | '\\' :: _ ->
         match_singles_set lst cnt acc find_operand get_expr
     | 'C' :: 'o' :: 'm' :: 'p' :: t ->
-        if cnt = 0 then Comp (get_expr t)
+        if cnt = 0 then if acc = [] then Comp (get_expr t) else raise Malformed
         else find_operand t (acc @ ('C' :: 'o' :: 'm' :: [ 'p' ])) cnt
     | [ a ] ->
         if acc = [] && a |> Char.code |> is_capital then Set a

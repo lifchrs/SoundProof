@@ -40,19 +40,144 @@ let parse_logic_tests =
     parse_logic_test "left parens peeling" "(A)" "((A))";
     parse_logic_error_test "raises malformed with incorrect expression"
       Malformed [ "(()" ];
-    parse_logic_test "testing ^ when more is to be read" "(((A)^(B))v((C)^(D)))"
+    parse_logic_test " ^ when more is to be read" "(((A)^(B))v((C)^(D)))"
       "(A^B) v (C^D)";
-    parse_logic_test "testing ! when more is to be read" "((!(B))v(!(D)))"
+    parse_logic_test " ! when more is to be read" "((!(B))v(!(D)))"
       "(!B) v (!D)";
     parse_logic_error_test "raises malformed with unbalanced parens" Malformed
       [ "())" ];
-    parse_logic_test "testing => when more is to be read"
-      "(((A)=>(B))v((C)=>(D)))" "(A=>B) v (C=>D)";
-    parse_logic_test "testing <=> when more is to be read"
-      "(((A)<=>(B))v((C)<=>(D)))" "(A<=>B) v (C<=>D)";
+    parse_logic_test " => when more is to be read" "(((A)=>(B))v((C)=>(D)))"
+      "(A=>B) v (C=>D)";
+    parse_logic_test " <=> when more is to be read" "(((A)<=>(B))v((C)<=>(D)))"
+      "(A<=>B) v (C<=>D)";
+    parse_logic_test "negation of chained ands" "(!((A)^((B)^((C)^(B)))))"
+      "!(A^B^C^B)";
+    parse_logic_test "simple implication" "((A)=>(B))" "A => B";
+    parse_logic_test "multiple ors" "((A)v((B)v((C)v(D))))" "A v B v C v D";
+    parse_logic_test "implication, and, or" "((A)<=>((V)^((C)v(D))))"
+      "A <=> V^(CvD)";
+    parse_logic_test "negation of implication" "(!((A)=>((B)v(D))))"
+      "!(A => BvD)";
+    parse_logic_test "negation of implication with and"
+      "(!((A)v(((B)=>(C))^(D))))" "!(A v ((B => C)^D))";
+    parse_logic_test "5 chained ors" "((A)v((B)v((C)v((D)v(E)))))"
+      "A v B v C v D v E";
+    parse_logic_test "negation of implication" "(!((A)=>(A)))" "!(A => A)";
+    parse_logic_test "Identity implication" "((A)=>(A))" "A => A";
+    parse_logic_test "identity iff" "((A)<=>(A))" "A <=> A";
+    parse_logic_test "negation of ors" "(!((A)v(!(B))))" "!(A v !B)";
+    parse_logic_test "chained implication" "((A)=>((B)=>(C)))" "A => (B => C)";
+    parse_logic_test "biimplication with and" "((A)<=>((B)^(C)))"
+      "A <=> (B ^ C)";
+    parse_logic_test "commutativity of or" "(((P)^(B))=>((B)^(P)))"
+      "(P ^ B) => (B ^P)";
+    parse_logic_test "Biimpl with or" "(((U)^(P))=>((U)<=>(P)))"
+      "(U^P) => (U <=> P)";
+    parse_logic_test "implication with not" "((B)=>(!(P)))" "B => !P";
+    parse_logic_test "bimplication implies implication"
+      "(((A)<=>(D))=>((D)=>(A)))" "(A <=> D) => (D => A)";
+    parse_logic_test "and anded with or (different prop letters too)"
+      "(((A)^(D))^((B)v(D)))" "(A ^ D) ^ (B v D)";
+    parse_logic_test "negation implies and implication"
+      "(!((A)=>((A)v((D)=>(A)))))" "!(A) => (A v D => A)";
+    parse_logic_test "(C) different proposition names" "(C)" "C";
+    parse_logic_test "(D) different proposition names" "(D)" "D";
+    parse_logic_test "negation of chain of ors" "(!((A)v((A)v((A)v(A)))))"
+      "!(A v A v A v A)";
+    parse_logic_test "chain of ands" "((A)^((A)^((A)^((A)^((A)^(A))))))"
+      "A ^ A ^A^ A ^ A^A";
+    parse_logic_test "chain of ands with parentheses precedence"
+      "(((A)^(A))^(A))" "(A^A) ^ A";
+    parse_logic_test "ors of V" "((V)v((V)v(V)))" "V v V v V";
+    parse_logic_test "ors and ands of V" "((V)v((V)^(V)))" "V v V ^ V";
+    parse_logic_test "negation of biimplication (AB)" "(!((A)<=>(B)))"
+      "!(A <=> B)";
+    parse_logic_test "implication implies implication"
+      "(((A)=>(B))=>((C)=>(D)))" "(A=>B) => (C => D)";
+    parse_logic_test "testing different prop naems with ands of ors"
+      "(((A)v(B))^(((C)v(D))^((E)v(D))))" "(AvB)^((CvD)^(EvD ))";
+    parse_logic_test "bimplication with implication" "((A)<=>((B)=>(C)))"
+      "A <=> (B => C)";
+    parse_logic_test "negation of or and with ands" "(!(((A)v(D))^((C)^(D))))"
+      "!(AvD) ^ C^D";
+    parse_logic_test "ors of negations" "(!((C)v(!((D)v(!(A))))))"
+      "!(C) v !(D) v !A";
+    parse_logic_test "neg of and" "(!((A)^(B)))" "!(A^B)";
+    parse_logic_test "and of neg" "((!(A))v(B))" "((!A) v (B))";
+    parse_logic_test "peels parentheses correctly" "(A)" "((((((((A))))))))";
+    parse_logic_test "ors with precedence" "(((A)v(B))v(C))" "(((A) v B) v C)";
+    parse_logic_test "A or A" "((A)v(A))" "A  v  A";
+    parse_logic_test "spacing doesn't matter" "((B)^((A)v(D)))"
+      "B ^   (A v    D)";
+    parse_logic_test "multiple negations" "(!(!(!(!(!(!(A)))))))"
+      "!(!(!(!(!(!(A))))))";
+    parse_logic_test "multiple (fewer) negations" "(!(!(!(A))))" "!(!(!A))";
+    parse_logic_test "nested netations " "(!((B)^(!((B)^(!(B))))))"
+      "!(B^!(B^!(B)))";
+    parse_logic_test "nested implications" "((A)=>((B)=>((C)=>((D)=>(E)))))"
+      "A => (B => (C => (D => E)))";
+    parse_logic_test "and of not of and" "((A)^(!((B)^(A))))" "A ^ !(B^A)";
+    parse_logic_test "biimplication of and + or" "((A)<=>((B)^((C)v(A))))"
+      "A <=> B ^ (C v A) ";
+    parse_logic_test "implication of biimplication" "((A)=>((B)<=>(C)))"
+      "A => (B <=> C)";
+    parse_logic_test "implication of negations" "((!(C))=>(!(D)))"
+      "(!C) => (!D)";
+    parse_logic_test "negation of an implication using A" "(!((A)=>(A)))"
+      "!(A => A)";
+    parse_logic_error_test "unbalanced parentehses" Malformed [ "()))" ];
+    parse_logic_error_test "double A (AA)" Malformed [ "AA" ];
+    parse_logic_error_test "unbalanced parentheses with A" Malformed [ "((A)" ];
+    parse_logic_error_test "singularly empty parens" Malformed [ "()" ];
+    parse_logic_error_test "nested empty parens" Malformed [ "(())" ];
+    parse_logic_error_test "parens around lowercase" Malformed [ "(a)" ];
+    parse_logic_error_test "AB" Malformed [ "AB" ];
+    parse_logic_error_test "double or (vv) " Malformed [ "AvvB" ];
+    parse_logic_error_test "double and (^^)" Malformed [ "A ^^ C" ];
+    parse_logic_error_test "BB in larger expression" Malformed
+      [ "A v (BB ^ D)" ];
+    parse_logic_error_test "singular and" Malformed [ "v" ];
+    parse_logic_error_test "singular or" Malformed [ "^" ];
+    parse_logic_error_test "singular neg" Malformed [ "!" ];
+    parse_logic_error_test "singular impl" Malformed [ "=>" ];
+    parse_logic_error_test "extra = in impl sign" Malformed [ "A ==> B" ];
+    parse_logic_error_test "impl then and" Malformed [ "A => ^B" ];
+    parse_logic_error_test "and then impl" Malformed [ "A ^ => B" ];
+    parse_logic_error_test "or then impl" Malformed [ "A v => E" ];
+    parse_logic_error_test "triple and" Malformed [ "A ^^^ B" ];
+    parse_logic_error_test "AB in chain of ands" Malformed [ "A ^ AB ^ D" ];
+    parse_logic_error_test "neg at end" Malformed [ "B!" ];
+    parse_logic_error_test "trailing or" Malformed [ "Av" ];
+    parse_logic_error_test "incomplete inside parens" Malformed [ "(Bv)A^A" ];
+    parse_logic_error_test "beginning or" Malformed [ "vA^V" ];
+    parse_logic_error_test "incomplete outside parens" Malformed
+      [ "C(D^(AvA))" ];
+    parse_logic_error_test "Prop Neg Prop" Malformed [ "B!D" ];
+    parse_logic_error_test "and then biimpl" Malformed [ "A => (D^<=>D)" ];
+    parse_logic_error_test "<= error" Malformed [ "A <= D" ];
+    parse_logic_error_test "empty parens next to eachother" Malformed
+      [ "()()(A)" ];
+    parse_logic_error_test "empty parens with lower case" Malformed
+      [ "()()(a)" ];
+    parse_logic_error_test "just empty parens" Malformed [ "()()()" ];
+    parse_logic_error_test "empty parens before correct expr" Malformed
+      [ "(()) A => B" ];
+    parse_logic_test "and with neg of or" "((A)v(!((B)v(B))))" "A v !(BvB)";
+    parse_logic_test "A impl neg A" "((A)=>(!(A)))" "A => !A";
+    parse_logic_test "B impl of neg of chain of and"
+      "((A)<=>(!((A)^((B)^(C)))))" "A <=> !((A)^B^C)";
+    parse_logic_test "neg of and of impl" "(!((B)^((A)=>(B))))" "!(B^(A=>B))";
+    parse_logic_test "A and not A implication" "((A)^((!(A))=>(D)))"
+      "A^(!A) => D";
+    parse_logic_error_test "equals sign not allowed" Malformed [ "A = B" ];
+    parse_logic_test "and of some negs" "((C)^((!(B))^(!(D))))"
+      "C ^ (!B) ^ (!D)";
+    parse_logic_test "and of negs with precedence" "((D)^((E)v((!(F))^(X))))"
+      "D ^ (E v (!F) ^ X)";
   ]
 
 (** [parse_set_test name expected_output input] constructs an OUnit test named
+
     [name] that asserts the quality of [expected_output] with
     [\[input\] |> parse_set |> string_of_set_expr]. *)
 let parse_set_test (name : string) (expected_output : string) (e1 : string) :
