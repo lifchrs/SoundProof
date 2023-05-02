@@ -1,8 +1,7 @@
 (** Storage of previous stages and current task in proof. *)
 
-module Make : Prooftype.ProofMaker
-(** [Make] makes a [ProofType] of desired type. *)
-
+(** Type of a logic proof, with all necessary functions to perform operations on
+    a logic proof *)
 module LOGIC_PROOF : sig
   module T : sig
     type t = Command.logic_expression
@@ -21,6 +20,8 @@ module LOGIC_PROOF : sig
   val add_to_history : expr -> bool -> unit
 end
 
+(** Type of a set proof, with all necessary functions to perform operations on a
+    set proof *)
 module SET_PROOF : sig
   module T : sig
     type t = Command.set_expression
