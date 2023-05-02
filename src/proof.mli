@@ -15,9 +15,9 @@ module LOGIC_PROOF : sig
 
   val clear_proof : unit -> unit
   val curr_goal : expr option ref
-  val set_curr_goal : expr option -> unit
+  val set_curr_goal : expr option -> bool
   val history : expr list ref
-  val add_to_history : expr -> bool -> unit
+  val add_to_history : expr -> bool -> bool
 end
 
 (** Type of a set proof, with all necessary functions to perform operations on a
@@ -35,7 +35,7 @@ module SET_PROOF : sig
 
   val clear_proof : unit -> unit
   val curr_goal : expr option ref
-  val set_curr_goal : expr option -> unit
+  val set_curr_goal : expr option -> bool
   val history : expr list ref
-  val add_to_history : expr -> bool -> unit
+  val add_to_history : expr -> bool -> bool
 end

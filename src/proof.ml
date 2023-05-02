@@ -34,9 +34,11 @@ functor
       curr_goal := None;
       history := []
 
-    let set_curr_goal e =
+    let set_curr_goal e : bool =
       match e with
-      | None -> curr_goal := None
+      | None ->
+          curr_goal := None;
+          false
       | Some e1 ->
           if
             (* Checks if the string of any expression is identical to the one we
@@ -46,8 +48,11 @@ functor
               (List.map (fun e2 -> T.to_string e2) !history)
           then (
             print_endline "Goal already shown! Please enter a new goal";
-            curr_goal := None)
-          else curr_goal := e
+            curr_goal := None;
+            false)
+          else (
+            curr_goal := e;
+            true)
 
     let compare_with_goal e =
       match !curr_goal with
@@ -60,21 +65,24 @@ functor
     (** Verifies if an expression is sound based on previous expressions. If [b]
         is [true] then verifies among all previous steps, and if [b] is false
         then verifies among previous step*)
-    let verify_new_step (e : expr) =
+    let verify_new_step (e : expr) : bool =
       if T.comparison !history e then (
         history := !history @ [ e ];
-        compare_with_goal e)
-      else
+        compare_with_goal e;
+        true)
+      else (
         print_endline
           "Entered step not logically equivalent with comparison method";
-      print_endline
-        ("Previous steps: "
-        ^ pp_list pp_string (List.map (fun x -> T.to_string x) !history))
+        print_endline
+          ("Previous steps: "
+          ^ pp_list pp_string (List.map (fun x -> T.to_string x) !history));
+        false)
 
-    let add_to_history (e : expr) force =
+    let add_to_history (e : expr) force : bool =
       if force then (
         compare_with_goal e;
-        history := !history @ [ e ])
+        history := !history @ [ e ];
+        true)
       else verify_new_step e
   end
 

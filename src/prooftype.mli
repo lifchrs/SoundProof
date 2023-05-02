@@ -36,13 +36,13 @@ module type ProofStorage = sig
   (** The current expression we are trying to show, or None if there was no goal
       entered or the current goal was shown*)
 
-  val set_curr_goal : expr option -> unit
+  val set_curr_goal : expr option -> bool
   (** Sets current expression we are trying to show*)
 
   val history : expr list ref
   (** Gets history of all previous steps in proof *)
 
-  val add_to_history : expr -> bool -> unit
+  val add_to_history : expr -> bool -> bool
   (** Adds expression to proof history, comparing it to the current history
       based on [comparison]*)
 end

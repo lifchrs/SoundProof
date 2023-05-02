@@ -4,14 +4,6 @@ open Proof
 
 let proof_type = ref ""
 
-(* type element_option = | SetProof of Command.set_expression list | LogicProof
-   of Command.logic_expression list
-
-   type store_proof = (string * element_option) list
-
-   let prev_proofs : store_proof ref = ref [] let to_string (lst : store_proof)
-   : unit = match lst with | [] -> print_endline "" | h :: t -> *)
-
 let help_message =
   "Thank you for using Proof Verifier supreme. \n"
   ^ "To input your proof, you will enter the statement you want to show, your \
@@ -45,32 +37,82 @@ let type_out_slowly str =
   loop 0;
   print_newline ()
 
+(* let in_file = "data/in.txt" *)
+let out_file = "data/out.txt"
+let oc = open_out_gen [ Open_append; Open_creat ] 0o666 out_file
+let to_save = ref false
+let write_out str = Printf.fprintf oc "%s\n" str
+
 let rec start_new_proof () =
-  match
-    String.lowercase_ascii
+  let input =
+    String.split_on_char ' '
       (try read_line ()
        with End_of_file ->
          print_endline "Exiting now.";
+         write_out "";
+         close_out oc;
          exit 0)
-  with
-  | "help" ->
-      type_out_slowly help_message;
+  in
+  match input with
+  | [] ->
+      type_out_slowly "Please enter a non-empty command";
       start_new_proof ()
-  | "start logic" ->
-      type_out_slowly
-        "Beginning logic proof process.\n\
-        \    Remember, if at any point you need help,  just type the command \
-         \"help\"";
-      proof_type := "logic"
-  | "start set" ->
-      type_out_slowly
-        "Beginning set proof process.\n\
-        \    Remember, if at any point you need help,  just type the command \
-         \"help\"";
-      proof_type := "set"
-  | "quit" ->
-      print_endline "Exiting now.";
-      exit 0
+  | [ cmd ] -> begin
+      match String.lowercase_ascii cmd with
+      | "help" ->
+          type_out_slowly help_message;
+          start_new_proof ()
+      | "quit" ->
+          print_endline "Exiting now.";
+          write_out "";
+          close_out oc;
+          exit 0
+      | _ ->
+          type_out_slowly
+            "Unknown command. If you want to start your proof, type \"START \
+             LOGIC\" or \"START SET\", or  \"help\" for more information";
+          start_new_proof ()
+    end
+  | "start" :: cmds2 -> begin
+      match cmds2 with
+      | [ "logic" ] ->
+          type_out_slowly
+            "Beginning logic proof process.\n\
+            \    Remember, if at any point you need help,  just type the \
+             command \"help\"";
+          proof_type := "logic";
+          to_save := false
+      | [ "set" ] ->
+          type_out_slowly
+            "Beginning set proof process.\n\
+            \    Remember, if at any point you need help,  just type the \
+             command \"help\"";
+          proof_type := "set";
+          to_save := false
+      | "logic" :: "save" :: name ->
+          type_out_slowly
+            "Beginning logic proof process.\n\
+            \    Remember, if at any point you need help,  just type the \
+             command \"help\"";
+          proof_type := "logic";
+          to_save := true;
+          write_out ("Name: " ^ String.concat " " name);
+          write_out "Type: Logic Proof"
+      | "set" :: "save" :: name ->
+          type_out_slowly
+            "Beginning set proof process.\n\
+            \    Remember, if at any point you need help,  just type the \
+             command \"help\"";
+          proof_type := "set";
+          to_save := true;
+          write_out ("Name: " ^ String.concat " " name);
+          write_out "Type: Set Proof"
+      | _ ->
+          type_out_slowly
+            "Please make sure \"start\" is followed by the proof type, and \
+             optionally the keyword \"save\" with a name";
+          start_new_proof ()
+    end
   | _ ->
       type_out_slowly
         "Unknown command. If you want to start your proof, type \"START \
@@ -84,11 +126,15 @@ let rec get_command () =
     try read_line ()
     with End_of_file ->
       print_endline "Exiting now.";
+      write_out "";
+      close_out oc;
       exit 0
   in
   match String.lowercase_ascii str with
   | "quit" ->
       print_endline "Exiting now.";
+      write_out "";
+      close_out oc;
       exit 0
   | "help" ->
       type_out_slowly help_message;
@@ -99,6 +145,9 @@ let rec get_command () =
          proof with the commands \"START LOGIC\" or \"START SET\"";
       LOGIC_PROOF.clear_proof ();
       SET_PROOF.clear_proof ();
+      if !to_save then (
+        write_out "End proof.";
+        write_out "");
       start_new_proof ();
       get_command ()
   | _ -> (
@@ -123,16 +172,34 @@ let rec proof_loop () =
       | "logic" -> (
           let expr = parse_logic expr_str in
           match cmd with
-          | "Assume" -> LOGIC_PROOF.add_to_history expr true
-          | "Show" -> LOGIC_PROOF.set_curr_goal (Some expr)
-          | "Verify" -> LOGIC_PROOF.add_to_history expr false
+          | "Assume" ->
+              if LOGIC_PROOF.add_to_history expr true then
+                if !to_save then
+                  write_out ("Assume" ^ " " ^ Command.string_of_logic_expr expr)
+          | "Show" ->
+              if LOGIC_PROOF.set_curr_goal (Some expr) then
+                if !to_save then
+                  write_out ("Show" ^ " " ^ Command.string_of_logic_expr expr)
+          | "Verify" ->
+              if LOGIC_PROOF.add_to_history expr false then
+                if !to_save then
+                  write_out ("Verify" ^ " " ^ Command.string_of_logic_expr expr)
           | _ -> raise Malformed)
       | "set" -> (
           let expr = parse_set expr_str in
           match cmd with
-          | "Assume" -> SET_PROOF.add_to_history expr true
-          | "Show" -> SET_PROOF.set_curr_goal (Some expr)
-          | "Verify" -> SET_PROOF.add_to_history expr false
+          | "Assume" ->
+              if SET_PROOF.add_to_history expr true then
+                if !to_save then
+                  write_out ("Assume" ^ " " ^ Command.string_of_set_expr expr)
+          | "Show" ->
+              if SET_PROOF.set_curr_goal (Some expr) then
+                if !to_save then
+                  write_out ("Shoe" ^ " " ^ Command.string_of_set_expr expr)
+          | "Verify" ->
+              if SET_PROOF.add_to_history expr false then
+                if !to_save then
+                  write_out ("Verify" ^ " " ^ Command.string_of_set_expr expr)
           | _ -> raise Malformed)
       | _ -> failwith "should not happen"
     with
@@ -155,7 +222,7 @@ let rec proof_loop () =
 (** [main ()] prompts for the game to play, then starts it. *)
 let main () =
   start_new_proof ();
-  proof_loop
+  proof_loop ()
 
 (* Execute the game engine. *)
 let () =
@@ -163,4 +230,4 @@ let () =
   type_out_slowly
     "Please use the command \"START LOGIC\" or \"START SET\" to begin your \
      proof, or \"help\" for more information. To end your proof, enter \"END\"";
-  main () ()
+  main ()
