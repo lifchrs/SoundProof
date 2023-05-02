@@ -1,35 +1,16 @@
 open Verifier
 open Command
-
-module LOGIC = struct
-  type t = Command.logic_expression
-
-  let compare x y = Logic.compare_logic x y
-  let to_string x = Command.string_of_logic_expr x
-
-  let comparison lst e =
-    match lst with
-    | [] -> false
-    | acc :: t -> compare (List.fold_left (fun x acc -> Conj (x, acc)) acc t) e
-end
-
-module LOGIC_PROOF = Proof.Make (LOGIC)
-
-module SET = struct
-  type t = Command.set_expression
-
-  let compare x y = Logic.compare_sets x y
-  let to_string x = Command.string_of_set_expr x
-
-  let comparison lst e =
-    match lst with
-    | [] -> false
-    | _ -> compare (List.hd (List.rev lst)) e
-end
-
-module SET_PROOF = Proof.Make (SET)
+open Proof
 
 let proof_type = ref ""
+
+(* type element_option = | SetProof of Command.set_expression list | LogicProof
+   of Command.logic_expression list
+
+   type store_proof = (string * element_option) list
+
+   let prev_proofs : store_proof ref = ref [] let to_string (lst : store_proof)
+   : unit = match lst with | [] -> print_endline "" | h :: t -> *)
 
 let help_message =
   "Thank you for using Proof Verifier supreme. \n"
@@ -64,6 +45,38 @@ let type_out_slowly str =
   loop 0;
   print_newline ()
 
+let rec start_new_proof () =
+  match
+    String.lowercase_ascii
+      (try read_line ()
+       with End_of_file ->
+         print_endline "Exiting now.";
+         exit 0)
+  with
+  | "help" ->
+      type_out_slowly help_message;
+      start_new_proof ()
+  | "start logic" ->
+      type_out_slowly
+        "Beginning logic proof process.\n\
+        \    Remember, if at any point you need help,  just type the command \
+         \"help\"";
+      proof_type := "logic"
+  | "start set" ->
+      type_out_slowly
+        "Beginning set proof process.\n\
+        \    Remember, if at any point you need help,  just type the command \
+         \"help\"";
+      proof_type := "set"
+  | "quit" ->
+      print_endline "Exiting now.";
+      exit 0
+  | _ ->
+      type_out_slowly
+        "Unknown command. If you want to start your proof, type \"START \
+         LOGIC\" or \"START SET\", or  \"help\" for more information";
+      start_new_proof ()
+
 (** Checks if input is valid, and returns proper command if it is. Otherwise,
     asks the user to re-input a command *)
 let rec get_command () =
@@ -73,22 +86,31 @@ let rec get_command () =
       print_endline "Exiting now.";
       exit 0
   in
-  if String.lowercase_ascii str = "quit" then (
-    print_endline "Exiting now.";
-    exit 0)
-  else if String.lowercase_ascii str = "help" then (
-    type_out_slowly help_message;
-    get_command ())
-  else
-    let lst_with_empty = String.split_on_char ' ' str in
-    let lst =
-      List.fold_right
-        (fun x acc -> if x <> "" then x :: acc else acc)
-        lst_with_empty []
-    in
-    match lst with
-    | [] -> raise Empty
-    | h :: t -> (h, t)
+  match String.lowercase_ascii str with
+  | "quit" ->
+      print_endline "Exiting now.";
+      exit 0
+  | "help" ->
+      type_out_slowly help_message;
+      get_command ()
+  | "end" ->
+      print_endline
+        "Proof cleared. Please quit with the command \"quit\" or start a new \
+         proof with the commands \"START LOGIC\" or \"START SET\"";
+      LOGIC_PROOF.clear_proof ();
+      SET_PROOF.clear_proof ();
+      start_new_proof ();
+      get_command ()
+  | _ -> (
+      let lst_with_empty = String.split_on_char ' ' str in
+      let lst =
+        List.fold_right
+          (fun x acc -> if x <> "" then x :: acc else acc)
+          lst_with_empty []
+      in
+      match lst with
+      | [] -> raise Empty
+      | h :: t -> (h, t))
 
 (** Repeatedly asks the user for an input and checks if it is equivalent to the
     previous input. Currently only terminates upon entering "quit" or an invalid
@@ -131,44 +153,14 @@ let rec proof_loop () =
   proof_loop ()
 
 (** [main ()] prompts for the game to play, then starts it. *)
-let rec main () =
-  match
-    String.lowercase_ascii
-      (try read_line ()
-       with End_of_file ->
-         print_endline "Exiting now.";
-         exit 0)
-  with
-  | "help" ->
-      type_out_slowly help_message;
-      main ()
-  | "start logic" ->
-      type_out_slowly
-        "Beginning logic proof process.\n\
-        \    Remember, if at any point you need help,  just type the command \
-         \"help\"";
-      proof_type := "logic";
-      proof_loop
-  | "start set" ->
-      type_out_slowly
-        "Beginning set proof process.\n\
-        \    Remember, if at any point you need help,  just type the command \
-         \"help\"";
-      proof_type := "set";
-      proof_loop
-  | "quit" ->
-      print_endline "Exiting now.";
-      exit 0
-  | _ ->
-      type_out_slowly
-        "Unknown command. If you want to start your proof, type \"start \
-         logic\" or \"start set\", or  \"help\" for more information";
-      main ()
+let main () =
+  start_new_proof ();
+  proof_loop
 
 (* Execute the game engine. *)
 let () =
   print_endline "";
   type_out_slowly
-    "Please use the command \"start logic\" or \"start set\" to begin your \
-     proof, or \"help\" for more information";
+    "Please use the command \"START LOGIC\" or \"START SET\" to begin your \
+     proof, or \"help\" for more information. To end your proof, enter \"END\"";
   main () ()

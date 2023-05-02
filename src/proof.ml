@@ -30,6 +30,10 @@ functor
     let curr_goal : expr option ref = ref None
     let history : expr list ref = ref []
 
+    let clear_proof () =
+      curr_goal := None;
+      history := []
+
     let set_curr_goal e =
       match e with
       | None -> curr_goal := None
@@ -73,3 +77,32 @@ functor
         history := !history @ [ e ])
       else verify_new_step e
   end
+
+module LOGIC = struct
+  type t = Command.logic_expression
+
+  let compare x y = Logic.compare_logic x y
+  let to_string x = Command.string_of_logic_expr x
+
+  let comparison lst e =
+    match lst with
+    | [] -> false
+    | acc :: t ->
+        compare (List.fold_left (fun x acc -> Command.Conj (x, acc)) acc t) e
+end
+
+module LOGIC_PROOF = Make (LOGIC)
+
+module SET = struct
+  type t = Command.set_expression
+
+  let compare x y = Logic.compare_sets x y
+  let to_string x = Command.string_of_set_expr x
+
+  let comparison lst e =
+    match lst with
+    | [] -> false
+    | _ -> compare (List.hd (List.rev lst)) e
+end
+
+module SET_PROOF = Make (SET)

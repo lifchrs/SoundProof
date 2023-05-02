@@ -17,6 +17,7 @@ module type ProofStorage = sig
 
   type expr = T.t
 
+  val clear_proof : unit -> unit
   val curr_goal : expr option ref
   val set_curr_goal : expr option -> unit
   val history : expr list ref

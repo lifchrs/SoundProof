@@ -29,6 +29,9 @@ module type ProofStorage = sig
   type expr = T.t
   (** [expr] is the type of expression in the proof*)
 
+  val clear_proof : unit -> unit
+  (** Clears proof by resetting history and current goal*)
+
   val curr_goal : expr option ref
   (** The current expression we are trying to show, or None if there was no goal
       entered or the current goal was shown*)
