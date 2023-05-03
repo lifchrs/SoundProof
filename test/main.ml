@@ -380,6 +380,28 @@ let compare_logic_tests =
       (Conj (Prop 'A', Neg (Prop 'B')))
       (Neg (Bi (Prop 'A', Prop 'B')))
       true;
+    compare_logic_test "(A v !B) ^ (B v !A) ^ !(A ^ B) implies !A ^ !B"
+      (Conj
+         ( Dis (Prop 'A', Neg (Prop 'B')),
+           Conj (Dis (Prop 'B', Neg (Prop 'A')), Neg (Conj (Prop 'A', Prop 'B')))
+         ))
+      (Conj (Neg (Prop 'A'), Neg (Prop 'B')))
+      true;
+    compare_logic_test "!(A ^ !B) implies A => B"
+      (Neg (Conj (Prop 'A', Neg (Prop 'B'))))
+      (Impl (Prop 'A', Prop 'B'))
+      true;
+    compare_logic_test "A => B does not imply A <=> B"
+      (Impl (Prop 'A', Prop 'B'))
+      (Bi (Prop 'A', Prop 'B'))
+      false;
+    compare_logic_test "(A => B) ^ A implies B"
+      (Conj (Impl (Prop 'A', Prop 'B'), Prop 'A'))
+      (Prop 'B') true;
+    compare_logic_test "(A ^ B) v C does not imply A => C"
+      (Dis (Conj (Prop 'A', Prop 'B'), Prop 'C'))
+      (Impl (Prop 'A', Prop 'C'))
+      false;
   ]
 
 let compare_sets_tests =
@@ -420,6 +442,21 @@ let compare_sets_tests =
       (Union
          ( Comp (Difference (Set 'A', Set 'C')),
            Comp (Difference (Set 'B', Set 'C')) ))
+      true;
+    compare_sets_test "B ^ Comp(A) is a subset of B \\ A"
+      (Intersection (Set 'B', Comp (Set 'A')))
+      (Difference (Set 'B', Set 'A'))
+      true;
+    compare_sets_test "Comp(A \\ (B ^ C)) is a subset of B ^ C v Comp(A)"
+      (Comp (Difference (Set 'A', Intersection (Set 'B', Set 'C'))))
+      (Union (Intersection (Set 'B', Set 'C'), Comp (Set 'A')))
+      true;
+    compare_sets_test "Comp(A) v B is not a subset of B \\ A"
+      (Union (Comp (Set 'A'), Set 'B'))
+      (Difference (Set 'B', Set 'A'))
+      false;
+    compare_sets_test "A is a subset of (A \\ B) v (A ^ B)" (Set 'A')
+      (Union (Difference (Set 'A', Set 'B'), Intersection (Set 'A', Set 'B')))
       true;
   ]
 
