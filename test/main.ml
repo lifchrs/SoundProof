@@ -2,6 +2,7 @@ open OUnit2
 open Verifier
 open Command
 open Logic
+open Proof
 
 (* Testing for Command compilation unit *)
 
@@ -422,6 +423,171 @@ let compare_sets_tests =
       true;
   ]
 
+(* Testing for Proof compilation unit *)
+
+module ProofTester (PROOF : Prooftype.ProofStorage) = struct
+  (** [proof_history_logic_test name steps expected_output] constructs an OUnit
+      test named [name] that asserts that [PROOF] will have the correct
+      [history] after adding the steps in [steps]. *)
+  let proof_history_test (name : string) (steps : PROOF.expr list) : test =
+    let rec add_steps steps =
+      match steps with
+      | h :: t ->
+          let _ = PROOF.add_to_history h true in
+          ();
+          add_steps t
+      | [] -> ()
+    in
+    PROOF.clear_proof ();
+    add_steps steps;
+    let history = !PROOF.history in
+    name >:: fun _ -> assert_equal steps history
+
+  (** [proof_add_test name steps expected_output] constructs an OUnit test named
+      [name] that asserts that asserts the quality of [expected_output] with
+      [PROOF.add_to_history last_step], where [last_step] is the last element of
+      [steps] and all previous elements have already been added to [PROOF]. *)
+  let proof_add_test (name : string) (expected_output : bool)
+      (steps : PROOF.expr list) : test =
+    let rec add_steps steps =
+      match steps with
+      | [ h ] -> h
+      | h :: t ->
+          let _ = PROOF.add_to_history h true in
+          add_steps t
+      | _ -> failwith "No step to check"
+    in
+    PROOF.clear_proof ();
+    let last_step = add_steps steps in
+    let result = PROOF.add_to_history last_step false in
+    name >:: fun _ -> assert_equal expected_output result
+
+  (** [proof_add_test name steps expected_output] constructs an OUnit test named
+      [name] that asserts that asserts that [PROOF.set_curr_goal goal] has the
+      side effect of causing [PROOF.curr_goal] to evaluate to [goal]. *)
+  let proof_set_goal_test (name : string) (goal : PROOF.expr option) : test =
+    PROOF.clear_proof ();
+    let _ = PROOF.set_curr_goal goal in
+    ();
+    let result = !PROOF.curr_goal in
+    name >:: fun _ -> assert_equal goal result
+
+  (** [proof_add_test name steps expected_output] constructs an OUnit test named
+      [name] that asserts that asserts that [PROOF.clear_proof] has the side
+      effect of causing [PROOF.curr_goal] to evaluate to [None] and causing
+      [PROOF.history] to evaluate to [\[\]]. *)
+  let proof_clear_test _ : test =
+    PROOF.clear_proof ();
+    let actual_history = !PROOF.history in
+    let actual_goal = !PROOF.curr_goal in
+    "clear_proof test" >:: fun _ ->
+    assert_equal (None, []) (actual_goal, actual_history)
+end
+
+module LogicTester = ProofTester (LOGIC_PROOF)
+module SetTester = ProofTester (SET_PROOF)
+
+let proof_logic_tests =
+  LogicTester.
+    [
+      proof_history_test "empty" [];
+      proof_history_test "one step" [ Prop 'A' ];
+      proof_history_test "two steps" [ Prop 'A'; Neg (Prop 'B') ];
+      proof_history_test "many steps"
+        [
+          Prop 'A';
+          Bi (Prop 'A', Conj (Prop 'A', Prop 'B'));
+          Prop 'C';
+          Impl (Prop 'C', Prop 'A');
+        ];
+      proof_history_test "repeat step should appear twice"
+        [ Prop 'B'; Prop 'C'; Prop 'B'; Conj (Prop 'A', Prop 'B') ];
+      proof_add_test "A and B implies A is valid" true
+        [ Conj (Prop 'A', Prop 'B'); Prop 'A' ];
+      proof_add_test "A, B in seperate steps imply A ^ B" true
+        [ Prop 'A'; Prop 'B'; Conj (Prop 'A', Prop 'B') ];
+      proof_add_test "A, B, D ^ E, !C steps imply A ^ B ^ (C => D)" true
+        [
+          Prop 'A';
+          Prop 'B';
+          Conj (Prop 'D', Prop 'E');
+          Neg (Prop 'C');
+          Conj (Prop 'A', Conj (Prop 'B', Impl (Prop 'C', Prop 'D')));
+        ];
+      proof_add_test "A, !(A ^ B) steps imply !B" true
+        [ Prop 'A'; Neg (Conj (Prop 'A', Prop 'B')); Neg (Prop 'B') ];
+      proof_add_test "A, B does not imply B ^ C" false
+        [ Prop 'A'; Prop 'B'; Conj (Prop 'B', Prop 'C') ];
+      proof_add_test "A v B, B v C does not imply A v C" false
+        [
+          Dis (Prop 'A', Prop 'B');
+          Dis (Prop 'B', Prop 'C');
+          Conj (Prop 'A', Prop 'C');
+        ];
+      proof_add_test "!A v B, A v !B steps imply A <=> B" true
+        [
+          Dis (Neg (Prop 'A'), Prop 'B');
+          Dis (Prop 'A', Neg (Prop 'B'));
+          Bi (Prop 'A', Prop 'B');
+        ];
+      proof_set_goal_test "no goal" None;
+      proof_set_goal_test "simple goal" (Some (Prop 'A'));
+      proof_set_goal_test "complicated goal"
+        (Some (Impl (Conj (Prop 'A', Prop 'B'), Dis (Prop 'A', Prop 'C'))));
+      proof_clear_test ();
+    ]
+
+let proof_set_tests =
+  SetTester.
+    [
+      proof_history_test "empty" [];
+      proof_history_test "one step" [ Set 'A' ];
+      proof_history_test "two steps" [ Set 'A'; Comp (Set 'B') ];
+      proof_history_test "many steps"
+        [
+          Set 'A';
+          Union (Set 'A', Intersection (Set 'B', Set 'C'));
+          Set 'C';
+          Difference (Set 'C', Set 'A');
+        ];
+      proof_history_test "repeat step should appear twice"
+        [ Set 'B'; Set 'C'; Set 'B'; Union (Set 'A', Set 'B') ];
+      proof_add_test "A ^ B is a subset of A" true
+        [ Intersection (Set 'A', Set 'B'); Set 'A' ];
+      proof_add_test "start with ignored step A, then B is a subset of A v B"
+        true
+        [ Set 'A'; Set 'B'; Union (Set 'A', Set 'B') ];
+      proof_add_test
+        "test ignore previous steps: start with ignored step A, then B is not \
+         a subset of A v C"
+        false
+        [ Set 'A'; Set 'B'; Union (Set 'A', Set 'C') ];
+      proof_add_test "A v (B  C) is a subset of A v B" true
+        [
+          Union (Set 'A', Difference (Set 'B', Set 'C'));
+          Union (Set 'A', Set 'B');
+        ];
+      proof_add_test "(B v A) \\ (B ^ C) is not a subset of B" false
+        [
+          Difference (Union (Set 'B', Set 'A'), Intersection (Set 'B', Set 'C'));
+          Set 'B';
+        ];
+      proof_add_test "(B ^ A) \\ (B ^ C) is a subset of A" true
+        [
+          Difference
+            (Intersection (Set 'B', Set 'A'), Intersection (Set 'B', Set 'C'));
+          Set 'A';
+        ];
+      proof_set_goal_test "no goal" None;
+      proof_set_goal_test "simple goal" (Some (Set 'A'));
+      proof_set_goal_test "complicated goal"
+        (Some
+           (Difference
+              ( Union (Set 'A', Intersection (Set 'B', Set 'C')),
+                Intersection (Set 'A', Set 'C') )));
+      proof_clear_test ();
+    ]
+
 let suite =
   "test suite for project"
   >::: List.flatten
@@ -430,6 +596,8 @@ let suite =
            parse_sets_tests;
            compare_logic_tests;
            compare_sets_tests;
+           proof_logic_tests;
+           proof_set_tests;
          ]
 
 let _ = run_test_tt_main suite
