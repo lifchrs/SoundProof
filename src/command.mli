@@ -1,5 +1,6 @@
 (**Parsing of user's commands. *)
 
+(**A type representing logic expressions. *)
 type logic_expression =
   | Prop of char
   | Dis of logic_expression * logic_expression
@@ -8,6 +9,7 @@ type logic_expression =
   | Bi of logic_expression * logic_expression
   | Neg of logic_expression
 
+(** A type representing set expressions. *)
 type set_expression =
   | Set of char
   | Comp of set_expression
@@ -22,17 +24,17 @@ exception Malformed
 (** Raised when a malformed expression is parsed. *)
 
 val parse_logic : string list -> logic_expression
-(** parse_logic generates a logic_expression corresponding to the logic command
-    represented by the string list entered*)
+(** [parse_logic] generates a value of type [logic_expression] corresponding to
+    the logic expression command represented by the string list entered*)
 
 val string_of_logic_expr : logic_expression -> string
-(**Creates a textual representation of a logical expression using the same
-   notation required for input*)
+(** [string_of_logic_expr] creates a string representation of a logical
+    expression using the same notation required for user input*)
 
 val parse_set : string list -> set_expression
-(** parse_set generates a set_expression corresponding to the set command
-    represented by the string list entered*)
+(** [parse_set] generates a value of type [set_expression] corresponding to the
+    set expression command represented by the string list entered*)
 
 val string_of_set_expr : set_expression -> string
-(**Creates a textual representation of a set expression using the same notation
-   required for input*)
+(** [string_of_set_expr] creates a string representation of a set expression
+    using the same notation required for user input*)

@@ -66,6 +66,7 @@ let rec match_singles_logic lst cnt acc find_operand get_expr =
       else find_operand t (acc @ [ '!' ]) cnt
   | _ -> failwith "never happens" [@coverage off]
 
+(*Finds the next operand in the char list and processes it*)
 and find_operand_logic lst acc cnt =
   if cnt < 0 then raise Malformed
   else
@@ -86,10 +87,14 @@ and find_operand_logic lst acc cnt =
     | h :: t -> find_operand t (acc @ [ h ]) cnt
     | [] -> raise Malformed
 
+(*A helper function to allow for mutual recursion between
+  [logic_expression_from_char_list] and [find_operand_logic]*)
 and logic_expression_from_char_list lst =
   let lst = peel_parentheses lst in
   find_operand_logic lst [] 0
 
+(*creates an expression from a string list as a helper function for
+  parse_logic*)
 let expression_from_logic str =
   let exploded_str = List.fold_left (fun acc x -> acc @ explode x) [] str in
   let spaces_removed_rev =
@@ -118,6 +123,7 @@ let rec string_of_logic_expr expr =
       "(" ^ string_of_logic_expr a ^ "<=>" ^ string_of_logic_expr b ^ ")"
   | Neg a -> "(" ^ "!" ^ string_of_logic_expr a ^ ")"
 
+(*matches the operators represented by a single character*)
 let rec match_singles_set lst cnt acc find_operand get_expr =
   match lst with
   | '(' :: t -> find_operand t (acc @ [ '(' ]) (cnt + 1)
@@ -133,9 +139,8 @@ let rec match_singles_set lst cnt acc find_operand get_expr =
       else find_operand t (acc @ [ '\\' ]) cnt
   | _ -> failwith "never happens" [@coverage off]
 
+(*Finds the next operand in the char list and processes it*)
 and find_operand_set lst acc cnt =
-  (* let _ = print_endline (String.concat " " (List.map (String.make 1) lst))
-     in *)
   if cnt < 0 then raise Malformed
   else
     let find_operand = find_operand_set in
@@ -152,12 +157,13 @@ and find_operand_set lst acc cnt =
     | h :: t -> find_operand t (acc @ [ h ]) cnt
     | [] -> raise Malformed
 
+(*A helper function to allow for mutual recursion between
+  [set_expression_from_char_list] and [find_operand_set]*)
 and set_expression_from_char_list lst =
   let lst = peel_parentheses lst in
   find_operand_set lst [] 0
-(* match lst with | [ a ] -> if a |> Char.code |> is_capital then Set a else
-   raise Malformed | _ -> find_operand_set lst [] 0 *)
 
+(*creates an expression from a string list as helper function for parse_set*)
 let expression_from_set str =
   let exploded_str = List.fold_left (fun acc x -> acc @ explode x) [] str in
   let spaces_removed_rev =
