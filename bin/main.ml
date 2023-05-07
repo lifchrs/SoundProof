@@ -2,26 +2,70 @@ open Verifier
 open Command
 open Proof
 
-let proof_type = ref ""
+let help_options =
+  "HELP MENU: \n\
+  \ Enter \"help logic\" for help with logic syntax \n\
+  \ Enter \"help set\" for help with set syntax \n\
+  \ Enter \"help input\" for help with reading in from a file \n\
+  \ Enter \"help save\" for help with writing to a file \n\
+  \ Common commands: \"quit\" to quit, \"end\" to end current proof, \
+   \"history\" to get current proof history"
 
-let help_message =
-  "Thank you for using Proof Verifier supreme. \n"
-  ^ "To input your proof, you will enter the statement you want to show, your \
-     given assumptions, and the steps between. \n"
-  ^ "The supported syntax is as follows: \n"
-  ^ " -Show E: Goal is to prove E true \n" ^ " -Assume P: Set P as true \n"
-  ^ " -Verify R: Use R as next step of proof \n"
-  ^ "Currently, we support logic and set proofs. \n"
-  ^ "In a logic proof, any of E, P, R, must only contain conjugation, \
-     disjunction, implication, bi-implication, or negation.\n"
-  ^ "These are denoted by \"^\", \"v\", \"=>\", \"<=>\", \"!\" respectively\n"
-  ^ "In a set proof, any of E, P, R, must only contain intersection, union, \
-     difference, or complement. \n"
-  ^ "These are denoted by \"^\", \"v\", \"\\\\\", \"Comp\" respectively \n"
-  ^ "Finally, use proper parentheses to certify order of operations. For  \
-     example, \n"
-  ^ "\"(P=>Q)^!R\" and \"P=>(Q^!R)\" are both proper syntax with different  \
-     meanings. \n" ^ "Good luck and happy proving!"
+let help_logic =
+  "LOGIC PROOF INFORMATION: \n\
+  \ To start a logic proof, enter \"start logic\". \n\
+  \ Please enter one of the following keywords: \"Show\", \"Assume\", \
+   \"Verify\" followed by an expression. \n\
+  \ Expressions can contain conjugation, disjunction, implication, \
+   bi-implication, or negation. \n\
+  \ These are denoted by \"^\", \"v\", \"=>\", \"<=>\", \"!\" respectively. \n\
+  \ Please remember to use proper parentheses to certify order of operations."
+
+let help_set =
+  "SET PROOF INFORMATION: \n\
+  \ To start a set proof, enter \"start set\". \n\
+  \ Please enter one of the following keywords: \"Show\", \"Assume\", \
+   \"Verify\" followed by an expression. \n\
+  \ Expressions can contain intersection, union, difference, or complement. \n\
+  \ These are denoted by  \"^\", \"v\", \"\\\\\", \"Comp\" respectively. \n\
+  \ Please remember to use proper parentheses to certify order of operations."
+
+let help_input =
+  "INPUTTING PROOF INFORMATION: \n\
+  \ To input a proof from a file, start the proof with \"start [logic // set] \
+   read [name of file]\" \n\
+  \ Files should be placed in the [data] directory. Write only the name \
+   following \"data\\\". Do not include \".txt\" \n\
+  \ The system should automatically read in the steps from the file, and allow \
+   you to continue as usual, either from where the file ended, or by starting \
+   a new proof."
+
+let help_save =
+  "SAVING PROOF INFORMATION: \n\
+  \ To save your proof, start the proof with \"start [logic // set] save [name \
+   of proof]\" \n\
+  \ Proceed as normal, based on which type of proof you entered. As usual, end \
+   the proof with \"end\""
+
+(* THE FOLLOWING TWO FUNCTIONS ARE TAKEN FROM ASSIGNMENT A2 OF 3110*)
+
+(** [pp_string s] pretty-prints string [s]. *)
+let pp_string s = "\"" ^ s ^ "\""
+
+(** [pp_list pp_elt lst] pretty-prints list [lst], using [pp_elt] to
+    pretty-print each element of [lst]. *)
+let pp_list pp_elt lst =
+  let pp_elts lst =
+    let rec loop n acc = function
+      | [] -> acc
+      | [ h ] -> acc ^ pp_elt h
+      | h1 :: (_ :: _ as t') ->
+          if n = 100 then acc ^ "..." (* stop printing long list *)
+          else loop (n + 1) (acc ^ pp_elt h1 ^ "; ") t'
+    in
+    loop 0 "" lst
+  in
+  "[" ^ pp_elts lst ^ "]"
 
 (** Causes string to appear like it is printing by letter instead of appearing *)
 let type_out_slowly str =
@@ -37,19 +81,131 @@ let type_out_slowly str =
   loop 0;
   print_newline ()
 
-(* let in_file = "data/in.txt" *)
+let proof_type = ref ""
 let out_file = "data/out.txt"
 let oc = open_out_gen [ Open_append; Open_creat ] 0o666 out_file
 let to_save = ref false
 let write_out str = Printf.fprintf oc "%s\n" str
+let command_list = ref []
 
+let rec get_cmds_from_file ic acc =
+  try get_cmds_from_file ic (input_line ic :: acc)
+  with End_of_file -> List.rev acc
+
+(** Support for starting new proof with IO. Modifies state accordingly to
+    properly read in from file or write out to file*)
+let set_proof_backend = function
+  | "logic" :: "save" :: name ->
+      type_out_slowly
+        "Beginning logic proof process.\n\
+        \    Remember, if at any point you need help,  just type the command \
+         \"help\"";
+      proof_type := "logic";
+      to_save := true;
+      write_out ("Name: " ^ String.concat " " name);
+      write_out "Type: Logic Proof";
+      true
+  | "set" :: "save" :: name ->
+      type_out_slowly
+        "Beginning set proof process.\n\
+        \    Remember, if at any point you need help,  just type the command \
+         \"help\"";
+      proof_type := "set";
+      to_save := true;
+      write_out ("Name: " ^ String.concat " " name);
+      write_out "Type: Set Proof";
+      true
+  | "logic" :: "read" :: [ filename ] -> (
+      proof_type := "logic";
+      try
+        let ic = open_in ("data/" ^ filename ^ ".txt") in
+        command_list := get_cmds_from_file ic [];
+        true
+      with
+      | Sys_error msg ->
+          type_out_slowly ("Error: " ^ msg);
+          false
+      | exn ->
+          type_out_slowly ("Error: " ^ Printexc.to_string exn);
+          false)
+  | "set" :: "read" :: [ filename ] -> (
+      proof_type := "set";
+      try
+        let ic = open_in ("data/" ^ filename ^ ".txt") in
+        command_list := get_cmds_from_file ic [];
+        true
+      with
+      | Sys_error msg ->
+          type_out_slowly ("Error: " ^ msg);
+          false
+      | exn ->
+          type_out_slowly ("Error: " ^ Printexc.to_string exn);
+          false)
+  | _ ->
+      type_out_slowly
+        "Unknown command. Please refer to \"help\" for proper syntax to start \
+         a proof";
+      false
+
+(** Support for commands "help" and "quit"*)
+let one_word_cmds cmd =
+  match String.lowercase_ascii cmd with
+  | "help" -> type_out_slowly help_options
+  | "quit" ->
+      print_endline "Exiting now.";
+      write_out "";
+      close_out oc;
+      exit 0
+  | _ ->
+      type_out_slowly
+        "Unknown command. Please refer to \"help\" for proper syntax to start \
+         a proof"
+
+(** Support for starting new proof without any IO*)
+let simple_new_proof cmd =
+  match String.lowercase_ascii cmd with
+  | "logic" ->
+      type_out_slowly
+        "Beginning logic proof process.\n\
+        \    Remember, if at any point you need help,  just type the command \
+         \"help\"";
+      proof_type := "logic";
+      to_save := false;
+      true
+  | "set" ->
+      type_out_slowly
+        "Beginning set proof process.\n\
+        \    Remember, if at any point you need help,  just type the command \
+         \"help\"";
+      proof_type := "set";
+      to_save := false;
+      true
+  | _ ->
+      type_out_slowly
+        "Unknown command. Please refer to \"help\" for proper syntax to start \
+         a proof";
+      false
+
+(** Determines which help message to print out*)
+let get_help_type cmd =
+  match String.lowercase_ascii cmd with
+  | "logic" -> type_out_slowly help_logic
+  | "set" -> type_out_slowly help_set
+  | "input" -> type_out_slowly help_input
+  | "save" -> type_out_slowly help_save
+  | _ ->
+      type_out_slowly
+        "Unknown command. Please refer to \"help\" for proper syntax to start \
+         a proof"
+
+(** Starts a new proof based on user commands. Repeatedly loops until a proper
+    command is entered, or the user decides to quit*)
 let rec start_new_proof () =
   let input =
     String.split_on_char ' '
       (try read_line ()
        with End_of_file ->
          print_endline "Exiting now.";
-         write_out "";
          close_out oc;
          exit 0)
   in
@@ -57,78 +213,59 @@ let rec start_new_proof () =
   | [] ->
       type_out_slowly "Please enter a non-empty command";
       start_new_proof ()
-  | [ cmd ] -> begin
-      match String.lowercase_ascii cmd with
-      | "help" ->
-          type_out_slowly help_message;
-          start_new_proof ()
-      | "quit" ->
+  | [ cmd ] ->
+      one_word_cmds cmd;
+      start_new_proof ()
+  | [ "start"; newtype ] ->
+      print_endline "abc";
+      if simple_new_proof newtype then () else start_new_proof ()
+  | [ "help"; helptype ] ->
+      get_help_type helptype;
+      start_new_proof ()
+  | "start" :: cmds2 ->
+      if set_proof_backend cmds2 then () else start_new_proof ()
+  | _ ->
+      type_out_slowly
+        "Unknown command. Please refer to \"help\" for proper syntax to start \
+         a proof";
+      start_new_proof ()
+
+(** Prints the history of the current proof to console*)
+let get_history () =
+  let str =
+    match !proof_type with
+    | "logic" ->
+        "History: "
+        ^ pp_list pp_string
+            (List.map
+               (fun x -> Command.string_of_logic_expr x)
+               !LOGIC_PROOF.history)
+    | "set" ->
+        "History: "
+        ^ pp_list pp_string
+            (List.map
+               (fun x -> Command.string_of_set_expr x)
+               !SET_PROOF.history)
+    | _ -> "No proof in progress. Please start a proof"
+  in
+  type_out_slowly str
+
+(** Checks if input is valid, and returns proper command if it is. Loops
+    repeatedly until the user enters a proper command or quits. *)
+let rec get_command () =
+  let str =
+    match !command_list with
+    | cmd :: rest ->
+        command_list := rest;
+        type_out_slowly cmd;
+        cmd
+    | [] -> (
+        try read_line ()
+        with End_of_file ->
           print_endline "Exiting now.";
           write_out "";
           close_out oc;
-          exit 0
-      | _ ->
-          type_out_slowly
-            "Unknown command. If you want to start your proof, type \"START \
-             LOGIC\" or \"START SET\", or  \"help\" for more information";
-          start_new_proof ()
-    end
-  | "start" :: cmds2 -> begin
-      match cmds2 with
-      | [ "logic" ] ->
-          type_out_slowly
-            "Beginning logic proof process.\n\
-            \    Remember, if at any point you need help,  just type the \
-             command \"help\"";
-          proof_type := "logic";
-          to_save := false
-      | [ "set" ] ->
-          type_out_slowly
-            "Beginning set proof process.\n\
-            \    Remember, if at any point you need help,  just type the \
-             command \"help\"";
-          proof_type := "set";
-          to_save := false
-      | "logic" :: "save" :: name ->
-          type_out_slowly
-            "Beginning logic proof process.\n\
-            \    Remember, if at any point you need help,  just type the \
-             command \"help\"";
-          proof_type := "logic";
-          to_save := true;
-          write_out ("Name: " ^ String.concat " " name);
-          write_out "Type: Logic Proof"
-      | "set" :: "save" :: name ->
-          type_out_slowly
-            "Beginning set proof process.\n\
-            \    Remember, if at any point you need help,  just type the \
-             command \"help\"";
-          proof_type := "set";
-          to_save := true;
-          write_out ("Name: " ^ String.concat " " name);
-          write_out "Type: Set Proof"
-      | _ ->
-          type_out_slowly
-            "Please make sure \"start\" is followed by the proof type, and \
-             optionally the keyword \"save\" with a name";
-          start_new_proof ()
-    end
-  | _ ->
-      type_out_slowly
-        "Unknown command. If you want to start your proof, type \"START \
-         LOGIC\" or \"START SET\", or  \"help\" for more information";
-      start_new_proof ()
-
-(** Checks if input is valid, and returns proper command if it is. Otherwise,
-    asks the user to re-input a command *)
-let rec get_command () =
-  let str =
-    try read_line ()
-    with End_of_file ->
-      print_endline "Exiting now.";
-      write_out "";
-      close_out oc;
-      exit 0
+          exit 0)
   in
   match String.lowercase_ascii str with
   | "quit" ->
@@ -137,17 +274,18 @@ let rec get_command () =
       close_out oc;
       exit 0
   | "help" ->
-      type_out_slowly help_message;
+      type_out_slowly help_options;
       get_command ()
   | "end" ->
       print_endline
         "Proof cleared. Please quit with the command \"quit\" or start a new \
-         proof with the commands \"START LOGIC\" or \"START SET\"";
+         proof. Type \"help\" for help";
       LOGIC_PROOF.clear_proof ();
       SET_PROOF.clear_proof ();
       if !to_save then (
         write_out "End proof.";
         write_out "");
+      proof_type := "";
       start_new_proof ();
       get_command ()
   | _ -> (
@@ -159,11 +297,18 @@ let rec get_command () =
       in
       match lst with
       | [] -> raise Empty
+      | [ "history" ] ->
+          get_history ();
+          get_command ()
+      | [ "help"; helptype ] ->
+          get_help_type helptype;
+          get_command ()
       | h :: t -> (h, t))
 
-(** Repeatedly asks the user for an input and checks if it is equivalent to the
-    previous input. Currently only terminates upon entering "quit" or an invalid
-    step*)
+(** Loops indefinitely until user decides to quit. It handles different commands
+    based on the proof type, such as adding assumptions, setting goals, and
+    performing verifications. It raises exceptions for malformed input and
+    continues the loop until valid input is provided. *)
 let rec proof_loop () =
   let _ =
     try
@@ -202,20 +347,12 @@ let rec proof_loop () =
                   write_out ("Verify" ^ " " ^ Command.string_of_set_expr expr)
           | _ -> raise Malformed)
       | _ -> failwith "should not happen"
-    with
-    | Malformed ->
-        type_out_slowly
-          "Error, Malformed string\n\
-          \    detected. Please make sure you enter a  keyword followed by an \
-           expression.\n\
-          \    Type \"help\" for help or  \"quit\" to quit";
-        proof_loop ()
-    | Empty ->
-        type_out_slowly
-          "Error, Empty string detected. Please make sure you enter a\n\
-          \    keyword  followed by an expression. Type \"help\" for help or \
-           \"quit\" to quit";
-        proof_loop ()
+    with Malformed | Empty ->
+      type_out_slowly
+        "Error, Malformed string detected. Please make sure you enter a \
+         keyword followed by an expression.\n\
+        \ Type \"help\" at any point if you need help";
+      proof_loop ()
   in
   proof_loop ()
 
@@ -228,6 +365,8 @@ let main () =
 let () =
   print_endline "";
   type_out_slowly
-    "Please use the command \"START LOGIC\" or \"START SET\" to begin your \
-     proof, or \"help\" for more information. To end your proof, enter \"END\"";
+    "Welcome to Proof Verifier Supreme! Enter the type of proof you would like \
+     to proceed with, or \"help\" for more information. \n\
+    \ Remember, at any time, you can exit with the command \"quit\". \n\
+    \ Good luck!";
   main ()
