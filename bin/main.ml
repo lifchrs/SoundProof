@@ -14,20 +14,22 @@ let help_options =
 let help_logic =
   "LOGIC PROOF INFORMATION: \n\
   \ To start a logic proof, enter \"start logic\". \n\
-  \ Please enter one of the following keywords: \"Show\", \"Assume\", \
-   \"Verify\" followed by an expression. \n\
+  \ Please enter one of the following keywords: \"SHOW\", \"ASSUME\", \
+   \"VERIFY\" followed by an expression. \n\
   \ Expressions can contain conjugation, disjunction, implication, \
    bi-implication, or negation. \n\
   \ These are denoted by \"^\", \"v\", \"=>\", \"<=>\", \"!\" respectively. \n\
+  \ All expressions should contain only capital letters. \n\
   \ Please remember to use proper parentheses to certify order of operations."
 
 let help_set =
   "SET PROOF INFORMATION: \n\
   \ To start a set proof, enter \"start set\". \n\
-  \ Please enter one of the following keywords: \"Show\", \"Assume\", \
-   \"Verify\" followed by an expression. \n\
+  \ Please enter one of the following keywords: \"SHOW\", \"ASSUME\", \
+   \"VERIFY\" followed by an expression. \n\
   \ Expressions can contain intersection, union, difference, or complement. \n\
   \ These are denoted by  \"^\", \"v\", \"\\\\\", \"Comp\" respectively. \n\
+  \ All expressions should contain only capital letters. \n\
   \ Please remember to use proper parentheses to certify order of operations."
 
 let help_input =
@@ -217,7 +219,6 @@ let rec start_new_proof () =
       one_word_cmds cmd;
       start_new_proof ()
   | [ "start"; newtype ] ->
-      print_endline "abc";
       if simple_new_proof newtype then () else start_new_proof ()
   | [ "help"; helptype ] ->
       get_help_type helptype;
@@ -317,34 +318,34 @@ let rec proof_loop () =
       | "logic" -> (
           let expr = parse_logic expr_str in
           match cmd with
-          | "Assume" ->
+          | "ASSUME" ->
               if LOGIC_PROOF.add_to_history expr true then
                 if !to_save then
-                  write_out ("Assume" ^ " " ^ Command.string_of_logic_expr expr)
-          | "Show" ->
+                  write_out ("ASSUME" ^ " " ^ Command.string_of_logic_expr expr)
+          | "SHOW" ->
               if LOGIC_PROOF.set_curr_goal (Some expr) then
                 if !to_save then
-                  write_out ("Show" ^ " " ^ Command.string_of_logic_expr expr)
-          | "Verify" ->
+                  write_out ("SHOW" ^ " " ^ Command.string_of_logic_expr expr)
+          | "VERIFY" ->
               if LOGIC_PROOF.add_to_history expr false then
                 if !to_save then
-                  write_out ("Verify" ^ " " ^ Command.string_of_logic_expr expr)
+                  write_out ("VERIFY" ^ " " ^ Command.string_of_logic_expr expr)
           | _ -> raise Malformed)
       | "set" -> (
           let expr = parse_set expr_str in
           match cmd with
-          | "Assume" ->
+          | "ASSUME" ->
               if SET_PROOF.add_to_history expr true then
                 if !to_save then
-                  write_out ("Assume" ^ " " ^ Command.string_of_set_expr expr)
-          | "Show" ->
+                  write_out ("ASSUME" ^ " " ^ Command.string_of_set_expr expr)
+          | "SHOW" ->
               if SET_PROOF.set_curr_goal (Some expr) then
                 if !to_save then
-                  write_out ("Shoe" ^ " " ^ Command.string_of_set_expr expr)
-          | "Verify" ->
+                  write_out ("SHOW" ^ " " ^ Command.string_of_set_expr expr)
+          | "VERIFY" ->
               if SET_PROOF.add_to_history expr false then
                 if !to_save then
-                  write_out ("Verify" ^ " " ^ Command.string_of_set_expr expr)
+                  write_out ("VERIFY" ^ " " ^ Command.string_of_set_expr expr)
           | _ -> raise Malformed)
       | _ -> failwith "should not happen"
     with Malformed | Empty ->
