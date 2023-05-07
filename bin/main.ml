@@ -19,8 +19,11 @@ let help_logic =
   \ Expressions can contain conjugation, disjunction, implication, \
    bi-implication, or negation. \n\
   \ These are denoted by \"^\", \"v\", \"=>\", \"<=>\", \"!\" respectively. \n\
-  \ All expressions should contain only capital letters. \n\
-  \ Please remember to use proper parentheses to certify order of operations."
+  \ All expressions should contain only capital letters to represent \
+   propositions. \n\
+  \ Operations are applied to the remainder of an expression !A v B is \
+   equivalent to !(A v B). To negate A by itself for example, write (!A) v B.\n\
+  \   Please remember to use proper parentheses to impose order of operations."
 
 let help_set =
   "SET PROOF INFORMATION: \n\
@@ -30,7 +33,10 @@ let help_set =
   \ Expressions can contain intersection, union, difference, or complement. \n\
   \ These are denoted by  \"^\", \"v\", \"\\\\\", \"Comp\" respectively. \n\
   \ All expressions should contain only capital letters. \n\
-  \ Please remember to use proper parentheses to certify order of operations."
+  \ Operations are applied to the remainder of an expression Comp A v B is \
+   equivalent to Comp (A v B). To take the complement of A by itself for \
+   example, write (Comp A) v B.\n\
+  \   Please remember to use proper parentheses to impose order of operations."
 
 let help_input =
   "INPUTTING PROOF INFORMATION: \n\
