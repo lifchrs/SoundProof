@@ -1,5 +1,7 @@
 (** Stores previous steps in the proof*)
 
+(** A module containing basic functions that a proof should support. Allows for
+    proper comparison between steps, and printing of values*)
 module type BasicFunctions = sig
   type t
 
