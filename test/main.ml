@@ -4,6 +4,32 @@ open Command
 open Logic
 open Proof
 
+(* Test plan:
+
+   We test the functionality in Command, Logic, and Proof (and Prooftype)
+   compilation units. Testing the functionality of Proof uses all functionality
+   from Prooftype, as that compilation unit is only used to provide module types
+   for the functors used in Proof. The functionality provided in bin/main.ml was
+   tested manually, as this file contains the code for the user interface and
+   I/O, and is thus best tested by simulating the inputs that users would enter.
+   We entered both usual and unusual (edge cases) user inputs, to try to ensure
+   that this manual testing was as comprehensive as possible and that there were
+   no uncaught errors which could result in a program crash.
+
+   We developed OUnit tests through a combination of glass-box and black-box
+   testing. We began with glass-box testing, and ensured using the bisect tool
+   that our tests called every piece of code that should be tested. We then used
+   black-box testing to ensure that our code handled corner cases, and that the
+   mutable features would not cause errors when multiple calls were made.
+
+   This demonstrates the correctness of the system, as we used OUnit testing,
+   with both glass-box and black-box methodologies used for developing tests, to
+   verify that the individual features worked correctly. We called functions
+   multiple times in some of these tests, to ensure that the mutable features
+   worked correctly over multiple calls. Finally, the manual testing ensures
+   that the features work correctly together and that the I/O code handles all
+   possible errors and never causes a program crash. *)
+
 (* Testing for Command compilation unit *)
 
 (** [parse_logic_test name expected_output input] constructs an OUnit test named
