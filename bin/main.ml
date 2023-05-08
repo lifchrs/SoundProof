@@ -21,7 +21,7 @@ let help_logic =
   \ These are denoted by \"^\", \"v\", \"=>\", \"<=>\", and \"!\" respectively. \n\
   \ All expressions should contain only capital letters to represent \
    propositions. \n\
-  \ Operations are applied to the remainder of an expression !A v B is \
+  \ Operations are applied to the remainder of an expression. !A v B is \
    equivalent to !(A v B). \n\
   \ To negate A by itself in that expression, write (!A) v B.\n\
   \ Please remember to use proper parentheses to impose order of operations."
@@ -34,7 +34,7 @@ let help_set =
   \ Expressions can contain intersection, union, difference, or complement. \n\
   \ These are denoted by  \"^\", \"v\", \"\\\\\", and \"Comp\" respectively. \n\
   \ All expressions should contain only capital letters. \n\
-  \ Operations are applied to the remainder of an expression Comp A v B is\n\
+  \ Operations are applied to the remainder of an expression. Comp A v B is\n\
   \   equivalent to Comp (A v B). \n\
   \ To take the complement of A by itself in that expression, write (Comp A) v \
    B.\n\
