@@ -46,7 +46,7 @@ let rec peel_parentheses lst =
       if can_peel t 0 then
         match List.rev t with
         | ')' :: t -> peel_parentheses (List.rev t)
-        | _ -> failwith "Shouldn't happen" [@coverage off]
+        | _ -> raise Malformed [@coverage off] (*never happens*)
       else lst
   | _ -> lst
 
@@ -64,7 +64,7 @@ let rec match_singles_logic lst cnt acc find_operand get_expr =
   | '!' :: t ->
       if cnt = 0 then if acc = [] then Neg (get_expr t) else raise Malformed
       else find_operand t (acc @ [ '!' ]) cnt
-  | _ -> failwith "never happens" [@coverage off]
+  | _ -> raise Malformed (*never happens*) [@coverage off]
 
 (*Finds the next operand in the char list and processes it*)
 and find_operand_logic lst acc cnt =
@@ -137,7 +137,7 @@ let rec match_singles_set lst cnt acc find_operand get_expr =
   | '\\' :: t ->
       if cnt = 0 then Difference (get_expr acc, get_expr t)
       else find_operand t (acc @ [ '\\' ]) cnt
-  | _ -> failwith "never happens" [@coverage off]
+  | _ -> raise Malformed (*never happens*) [@coverage off]
 
 (*Finds the next operand in the char list and processes it*)
 and find_operand_set lst acc cnt =
