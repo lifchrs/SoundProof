@@ -374,8 +374,8 @@ let main () =
 let () =
   print_endline "";
   type_out_slowly
-    "Welcome to Proof Verifier Supreme! Enter the type of proof you would like \
-     to proceed with, or \"help\" for more information. \n\
+    "Welcome to SoundProof! Enter the type of proof you would like to proceed \
+     with, or \"help\" for more information. \n\
     \ Remember, at any time, you can exit with the command \"quit\". \n\
     \ Good luck!";
   main ()
