@@ -1,4 +1,4 @@
-(** Stores previous steps in the proof*)
+(** All requirements to create a new type of proof *)
 
 (** A module containing basic functions that a proof should support. Allows for
     proper comparison between steps, and printing of values*)
