@@ -56,7 +56,7 @@ let rec compare_logic_rec (e1 : Command.logic_expression)
     possible configurations of truth values for the propositions*)
 let compare_logic (e1 : Command.logic_expression)
     (e2 : Command.logic_expression) =
-  let props = get_props e1 @ get_props e2 |> List.sort_uniq Stdlib.compare in
+  let props = get_props e1 @ get_props e2 |> List.sort_uniq compare in
   compare_logic_rec e1 e2 props (two_pow (List.length props) - 1)
 
 (** Get a list of the sets in a set_expression *)
@@ -102,5 +102,5 @@ let rec compare_set_rec (e1 : Command.set_expression)
     not in others, for all possible configurations of being in some sets and not
     in others, is not a member of the set [e1] or is a member of the set [e2] *)
 let compare_sets (e1 : Command.set_expression) (e2 : Command.set_expression) =
-  let sets = get_sets e1 @ get_sets e2 |> List.sort_uniq Stdlib.compare in
+  let sets = get_sets e1 @ get_sets e2 |> List.sort_uniq compare in
   compare_set_rec e1 e2 sets (two_pow (List.length sets) - 1)
