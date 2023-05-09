@@ -34,8 +34,8 @@ let help_set =
   \ Expressions can contain intersection, union, difference, or complement. \n\
   \ These are denoted by  \"^\", \"v\", \"\\\\\", and \"Comp\" respectively. \n\
   \ All expressions should contain only capital letters. \n\
-  \ Operations are applied to the remainder of an expression. Comp A v B is\n\
-  \   equivalent to Comp (A v B). \n\
+  \ Operations are applied to the remainder of an expression. Comp A v B is \
+   equivalent to Comp (A v B). \n\
   \ To take the complement of A by itself in that expression, write (Comp A) v \
    B.\n\
   \ Please remember to use proper parentheses to impose order of operations."
@@ -163,8 +163,9 @@ let one_word_cmds cmd =
   | "help" -> type_out_slowly help_options
   | "quit" ->
       print_endline "Exiting now.";
-      write_out "";
-      close_out oc;
+      if !to_save then (
+        write_out "";
+        close_out oc);
       exit 0
   | _ ->
       type_out_slowly
@@ -272,15 +273,17 @@ let rec get_command () =
         try read_line ()
         with End_of_file ->
           print_endline "Exiting now.";
-          write_out "";
-          close_out oc;
+          if !to_save then (
+            write_out "End proof.";
+            write_out "");
           exit 0)
   in
   match String.lowercase_ascii str with
   | "quit" ->
       print_endline "Exiting now.";
-      write_out "";
-      close_out oc;
+      if !to_save then (
+        write_out "End proof.";
+        write_out "");
       exit 0
   | "help" ->
       type_out_slowly help_options;
@@ -293,7 +296,8 @@ let rec get_command () =
       SET_PROOF.clear_proof ();
       if !to_save then (
         write_out "End proof.";
-        write_out "");
+        write_out "";
+        to_save := false);
       proof_type := "";
       start_new_proof ();
       get_command ()
