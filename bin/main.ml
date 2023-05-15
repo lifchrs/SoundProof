@@ -79,11 +79,17 @@ let pp_list pp_elt lst =
 
 (** Causes string to appear like it is printing by letter instead of appearing *)
 let type_out_slowly str =
-  (* let len = String.length str in let rec loop i = if i < len then (
-     print_char str.[i]; flush stdout; (*Adjust value of Unix.select to change
-     typing speed*) ignore (Unix.select [] [] [] 0.001); loop (i + 1)) in loop
-     0; print_newline () *)
-  print_endline str
+  let len = String.length str in
+  let rec loop i =
+    if i < len then (
+      print_char str.[i];
+      flush stdout;
+      (*Adjust value of Unix.select to change typing speed*)
+      ignore (Unix.select [] [] [] 0.01);
+      loop (i + 1))
+  in
+  loop 0;
+  print_newline ()
 
 let proof_type = ref ""
 let out_file = "data/out.txt"
