@@ -126,9 +126,9 @@ let set_proof_backend = function
       proof_type := "logic";
       try
         let ic = open_in ("data/" ^ filename ^ ".txt") in
-        print_endline ("data/" ^ filename ^ ".txt");
+        print_endline ("Opening file: data/" ^ filename ^ ".txt");
         command_list := get_cmds_from_file ic [];
-        print_endline (pp_list pp_string !command_list);
+        print_endline ("File contents: " ^ pp_list pp_string !command_list);
         true
       with
       | Sys_error msg ->
@@ -141,7 +141,9 @@ let set_proof_backend = function
       proof_type := "set";
       try
         let ic = open_in ("data/" ^ filename ^ ".txt") in
+        print_endline ("Opening file: data/" ^ filename ^ ".txt");
         command_list := get_cmds_from_file ic [];
+        print_endline ("File contents: " ^ pp_list pp_string !command_list);
         true
       with
       | Sys_error msg ->
