@@ -1,4 +1,2 @@
-# cs3110-final-project
-Zach Cheslock (zcc9)
-Andre Oganesian (ao367)
-Adhitya Polavaram (ap977)
+# SoundProof
+This is a project I (Adhitya Polavaram) worked on with Zach Cheslock and Andre Oganesian.
